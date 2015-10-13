@@ -1,12 +1,10 @@
 package HapticCaseWindows;
-/*
- * 
- * TODO: ,	
- * 		why when resuming fetch after initial disconnect i get exception (thread start, fix it, can't start twice)
+/* TODO: 
  *		seperate the controller code in communicator from communicator (make a new class)
  *use that multithreaded swing components for gui OR JAVAFX WITH ORACLES SOMETHING SOMETING
  * * 		disable sensor buttons when not connected ! (add to toggle method)
  *				why does sensorSelector.toggleSensorButtons();not work ? ??
+ 		---> why can't i toggle the sensor buttons for half a second? 
  *
  *turn toggleAllControls back on in here adn gui ! 
  *
@@ -37,116 +35,95 @@ import HapticCaseWindows.Controller;
 
 public class Communicator // implements SerialPortEventListener
 {
-	public boolean isAsleep = false; // we want this in a file so other programs
-										// can query it
+	/*
+	 * GLOBALS
+	 */
 	static volatile private int sensors = 0;
-
+	public boolean isAsleep = true; // we want this in a file so other programs can query it
 	protected Model modelState = new Model();
 	private BlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(512);
 	protected List<SensorState> activeSensors = new ArrayList<SensorState>(5);
-
-	private Object changingSensorLock = new Object();
-
-	protected enum SensorState {
-		IN_STRIP_1, IN_STRIP_2, IN_STRIP_3, IN_STRIP_4, IN_XYZ, READY;
-	}
-
+	Object changingSensorLock = new Object();
 	protected SensorState currentSensor = SensorState.READY;
 	boolean isConsuming = false;
-
-	// passed from main GUI
-	GUI window = null;
-	SensorSelectorClass sensorSelector = null;
-
 	// for containing the ports that will be found
 	private Enumeration ports = null;
 	// map the port names to CommPortIdentifiers
 	private HashMap portMap = new HashMap();
-
 	// this is the object that contains the opened port
 	private CommPortIdentifier selectedPortIdentifier = null;
 	private SerialPort serialPort = null;
-
 	// input and output streams for sending and receiving data
 	private InputStream input = null;
 	private OutputStream output = null;
-
 	// just a boolean flag that i use for enabling
 	// and disabling buttons depending on whether the program
 	// is connected to a serial port or not
 	private boolean bConnected = false;
-
+	private int xCount = 0;
+	private int yCount = 0;
+	private boolean gotZero = false;
+	// passed from main GUI
+	GUI window = null;
+	SensorSelectorClass sensorSelector = null;
+	// a string for recording what goes on in the program
+	// this string is written to the GUI
+	String logText = "";
+	boolean halt = false;
+	static boolean isChangingSensors = false;
+	
+	/*
+	 * CONSTANTS
+	 */
+	protected static enum SensorState {
+		IN_STRIP_1, IN_STRIP_2, IN_STRIP_3, IN_STRIP_4, IN_XYZ, READY;
+	}
 	// the timeout value for connecting with the port
 	final static int TIMEOUT = 2000;
-
-	// some ascii values for for certain things
 	final static int SLEEP_BAUD_RATE = 9600;
 	final static int AWAKE_BAUD_RATE = 115200;
 	final static int END_MARKER = 0xFF;
 	final static int INIT_SLEEP_SETTING = 0;
 	final static int MAX_BUFFER = 32;
-
+	protected static int SIDE_STRIP_FORCE = 0;
+	protected static int SIDE_STRIP_POSITION = 1;
 	private static final int FIRST_STRIP = 0;
 	private static final int SECOND_STRIP = 1;
 	private static final int THIRD_STRIP = 2;
 	private static final int FOURTH_STRIP = 3;
-	private int xCount = 0;
-	private int yCount = 0;
-	private boolean gotZero = false;
 
-	protected static int SIDE_STRIP_FORCE = 0;
-	protected static int SIDE_STRIP_POSITION = 1;
-
-	public int getSensors() {
-		return sensors;
-	}
-
-	public void setSensors(int input) {
-		sensors = input;
-	}
-
-	// a string for recording what goes on in the program
-	// this string is written to the GUI
-	String logText = "";
-
-	// CONSTRUCTOR
+	/*
+	 *  CONSTRUCTOR
+	 */
 	public Communicator(GUI window, SensorSelectorClass sensorSelector) {
 		this.window = window;
 		this.sensorSelector = sensorSelector;
 	}
 
-	public void changeSensorsOutsideSleepBySwitch(int desiredSensor) {
-		// window.toggleSensorControls();
-		synchronized (changingSensorLock) {
+	public int getSensors() {
+		return sensors;
+	}
 
+	public void changeSensorsOutsideSleepBySwitch(int desiredSensor) {
+		window.toggleSensorControls();
+//		SensorSelectorClass.toggleSensorButtons(false);
+		isChangingSensors = true;
+		synchronized (changingSensorLock) {
 			activeSensors.clear();// clear active sensor list
 			makeDataLabelsNotVisible();
-
 			currentSensor = SensorState.READY;
-
-			int isDesired = 0;
-			if ((sensors & (0b00000001 << desiredSensor)) == 0) { // if we are
-																	// already
-																	// low
-				sensors = (sensors & ~(1 << desiredSensor)) | (1 << desiredSensor); // then
-																					// set
-																					// high
-
+			if ((sensors & (0b00000001 << desiredSensor)) == 0) { 
+				sensors = (sensors & ~(1 << desiredSensor)) | (1 << desiredSensor); 
 			} else {
 				sensors = (sensors & ~(1 << desiredSensor)) & ~(1 << desiredSensor);
-				// sensors = (all non desired bits anded with mask ) | (bit to
-				// set or not & n'th bit)
-
 			}
-
 			writeData(sensors);
 			try {
-				Thread.sleep(50);
+				Thread.sleep(500);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-
 			if (isAsleep) {
 				try {
 					serialPort.setSerialPortParams(AWAKE_BAUD_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
@@ -157,12 +134,10 @@ public class Communicator // implements SerialPortEventListener
 				}
 				isAsleep = false;
 			}
-
 			// add the active enum by iterating over bits of sensor and
 			// consulting a
 			// switch case setSensorState
 			if (sensors != 0) {
-
 				for (int i = 0; i < 5; i++) {
 					int tempInput = (sensors & (0b00000001 << i));
 					if (tempInput != 0)
@@ -176,27 +151,34 @@ public class Communicator // implements SerialPortEventListener
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-
 				currentSensor = SensorState.READY;
 				activeSensors.clear();// clear active sensor list
 				queue.clear();
 				modelState.cleanSensors();
 				isAsleep = true;
 			}
-
 			modelState.cleanSensors();
 			queue.clear();
-
 		}
-		// window.toggleSensorControls();
+		if (sensors == 0) {
+			halt = true;
+			logText = "Hardware has gone to sleep.";
+			window.txtLog.setForeground(Color.BLACK);
+			window.txtLog.append(logText + "\n");
+		} else if (sensors > 0 && halt) {
+			halt = false;
+			window.wake();
+			String logText = "Hardware has woken up.";
+			window.txtLog.setForeground(Color.BLACK);
+			window.txtLog.append(logText + "\n");
+		}
+		window.toggleSensorControls();
+//		SensorSelectorClass.toggleSensorButtons(true);
+		isChangingSensors = false;
+		window.pack();
 	}
 
-	private void makeDataLabelsNotVisible() {
-		// sensorSelector.strip1But.setVisible(false);
-		// sensorSelector.strip2But.setVisible(false);
-		// sensorSelector.strip3But.setVisible(false);
-		// sensorSelector.strip4But.setVisible(false);
-		// sensorSelector.xyzBut.setVisible(false);
+	private void makeDataLabelsNotVisible() { // we want to replace this -- it's probably not even necessary 
 		window.jLabels1a.setVisible(false);
 		window.jLabels1b.setVisible(false);
 		window.jLabels2a.setVisible(false);
@@ -208,7 +190,6 @@ public class Communicator // implements SerialPortEventListener
 	}
 
 	private void setSensorState(int sensorID) {
-
 		switch (sensorID) {
 		case 0b00000001:
 			activeSensors.add(SensorState.IN_STRIP_1);
@@ -240,10 +221,8 @@ public class Communicator // implements SerialPortEventListener
 	// post: adds all the found ports to a combo box on the GUI
 	public void searchForPorts() {
 		ports = CommPortIdentifier.getPortIdentifiers();
-
 		while (ports.hasMoreElements()) {
 			CommPortIdentifier curPort = (CommPortIdentifier) ports.nextElement();
-
 			// get only serial ports
 			if (curPort.getPortType() == CommPortIdentifier.PORT_SERIAL) {
 				window.cboxPorts.addItem(curPort.getName());
@@ -259,31 +238,22 @@ public class Communicator // implements SerialPortEventListener
 	public void connect() {
 		String selectedPort = (String) window.cboxPorts.getSelectedItem();
 		selectedPortIdentifier = (CommPortIdentifier) portMap.get(selectedPort);
-
 		CommPort commPort = null;
-
+		halt = true;
 		try {
 			// the method below returns an object of type CommPort
 			commPort = selectedPortIdentifier.open("HapticControlPanel", TIMEOUT);
 			// the CommPort object can be casted to a SerialPort object
 			serialPort = (SerialPort) commPort;
-
 			// for controlling GUI elements
 			setConnected(true);
-
-			// logging
-			logText = selectedPort + " opened successfully.";
-			window.txtLog.setForeground(Color.black);
+			logText = selectedPort + " opened successfully.\nHardware is asleep until a sensor request.";
+			window.txtLog.setForeground(Color.BLACK);
 			window.txtLog.append(logText + "\n");
-
-			// Thread.sleep(100);
-			// enables the controls on the GUI if a successful connection is
-			// made
-			// window.toggleAllControls();
-
+			window.toggleAllControls();
+			SensorSelectorClass.toggleSensorButtons(true);
 		} catch (PortInUseException e) {
 			logText = selectedPort + " is in use. (" + e.toString() + ")";
-
 			window.txtLog.setForeground(Color.RED);
 			window.txtLog.append(logText + "\n");
 		} catch (Exception e) {
@@ -300,7 +270,6 @@ public class Communicator // implements SerialPortEventListener
 		// return value for whather opening the streams is successful or not
 		boolean successful = false;
 		try {
-			//
 			input = serialPort.getInputStream();
 			output = serialPort.getOutputStream();
 			successful = true;
@@ -313,12 +282,6 @@ public class Communicator // implements SerialPortEventListener
 		}
 	}
 
-	// Thread changeBaudThread = new Thread(new Runnable() {
-	// public void run() {
-	//
-	// }
-	// });
-
 	// starts the event listener that knows whenever data is available to be
 	// read
 	// pre: an open serial port
@@ -329,26 +292,19 @@ public class Communicator // implements SerialPortEventListener
 			serialPort.addEventListener(new SerialReader(input));
 			serialPort.notifyOnDataAvailable(true);
 			currentSensor = SensorState.READY;
-		//	synchronized (changingSensorLock) {
+			synchronized (changingSensorLock) {
 				activeSensors.clear();// clear active sensor list
-				// sensorSelector.reset();
-
 				makeDataLabelsNotVisible();
-
 				modelState.cleanSensors();
 				queue.clear();
-
 				writeData(sensors);
-
 				try {
 					int tempBaud = 0;
 					Thread.sleep(50);
-
 					if (isAsleep || sensors == 0)
 						tempBaud = SLEEP_BAUD_RATE;
 					else
 						tempBaud = AWAKE_BAUD_RATE;
-
 					serialPort.setSerialPortParams(tempBaud, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
 							SerialPort.PARITY_NONE);
 					queue.clear();
@@ -359,11 +315,7 @@ public class Communicator // implements SerialPortEventListener
 					window.txtLog.append(logText + "\n");
 					window.txtLog.setForeground(Color.RED);
 				}
-				
-				
-				
-				
-			//}
+			}
 			isAsleep = true;
 			window.sensorNumberLabel.setText("" + getSensors());
 		} catch (TooManyListenersException e) {
@@ -378,44 +330,45 @@ public class Communicator // implements SerialPortEventListener
 	// pre: an open serial port
 	// post: clsoed serial port
 	public void disconnect() {
-		// sensorSelector.dispatchEvent(new WindowEvent(sensorSelector,
-		// WindowEvent.WINDOW_CLOSING));
-		currentSensor = SensorState.READY;
-		sensors = 0;
-		queue.clear();
-		writeData(INIT_SLEEP_SETTING);
-		try {
-			Thread.sleep(50);
-		} catch (InterruptedException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
+		synchronized (changingSensorLock) {
+			SensorSelectorClass.resetButtonState();
+			currentSensor = SensorState.READY;
+			sensors = 0;
+			queue.clear();
+			writeData(INIT_SLEEP_SETTING);
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e2) {
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
+			}
 
-		try {
-			serialPort.setSerialPortParams(SLEEP_BAUD_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
-					SerialPort.PARITY_NONE);
-		} catch (UnsupportedCommOperationException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+			try {
+				serialPort.setSerialPortParams(SLEEP_BAUD_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
+						SerialPort.PARITY_NONE);
+			} catch (UnsupportedCommOperationException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 
-		serialPort.removeEventListener();
-		serialPort.close();
+			serialPort.removeEventListener();
+			serialPort.close();
 
-		try {
-			input.close();
-			output.close();
-		} catch (IOException e) {
-			logText = "Failed to close " + serialPort.getName() + "(" + e.toString() + ")";
+			try {
+				input.close();
+				output.close();
+			} catch (IOException e) {
+				logText = "Failed to close " + serialPort.getName() + "(" + e.toString() + ")";
+				window.txtLog.setForeground(Color.red);
+				window.txtLog.append(logText + "\n");
+			}
+			setConnected(false);
+			window.toggleAllControls();
+			SensorSelectorClass.toggleSensorButtons(false);
+			logText = "Disconnected.\n";
 			window.txtLog.setForeground(Color.red);
 			window.txtLog.append(logText + "\n");
 		}
-		setConnected(false);
-		// window.toggleAllControls();
-
-		logText = "\nDisconnected.";
-		window.txtLog.setForeground(Color.red);
-		window.txtLog.append(logText + "\n");
 
 	}
 
@@ -436,6 +389,7 @@ public class Communicator // implements SerialPortEventListener
 			@Override
 			public void run() {
 				try {
+					// System.out.println("shit to be written is" + temp);
 					output.write(temp);
 					output.flush();
 				} catch (Exception e) {
@@ -473,7 +427,7 @@ public class Communicator // implements SerialPortEventListener
 
 			try {
 				Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
-				while ((data = in.read()) > -1) {
+				while (consumerThread.isAlive() && ((data = in.read()) > -1)) {
 					queue.add(data);
 				}
 			} catch (IOException e) {
@@ -485,7 +439,6 @@ public class Communicator // implements SerialPortEventListener
 
 	Thread consumerThread = new Thread(new Runnable() {
 		public void run() {
-
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
@@ -501,53 +454,53 @@ public class Communicator // implements SerialPortEventListener
 			}
 		}
 	});
-	boolean halt = false;
 
-	private void sleep() {
-		currentSensor = SensorState.READY;
-		writeData(0);
-		try {
-			Thread.sleep(50);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			serialPort.setSerialPortParams(SLEEP_BAUD_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
-					SerialPort.PARITY_NONE);
-		} catch (UnsupportedCommOperationException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		queue.clear();
-		modelState.cleanSensors();
-	}
 
-	private void wakeup() {
-		writeData(sensors);
-		try {
-			Thread.sleep(50);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			serialPort.setSerialPortParams(AWAKE_BAUD_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
-					SerialPort.PARITY_NONE);
-		} catch (UnsupportedCommOperationException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		queue.clear();
-		modelState.cleanSensors();
-	}
+//	private void sleep() {
+//		currentSensor = SensorState.READY;
+//		writeData(0);
+//		try {
+//			Thread.sleep(50);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		try {
+//			serialPort.setSerialPortParams(SLEEP_BAUD_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
+//					SerialPort.PARITY_NONE);
+//		} catch (UnsupportedCommOperationException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		queue.clear();
+//		modelState.cleanSensors();
+//	}
+
+//	private void wakeup() {
+//		writeData(sensors);
+//		try {
+//			Thread.sleep(50);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		try {
+//			serialPort.setSerialPortParams(AWAKE_BAUD_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1,
+//					SerialPort.PARITY_NONE);
+//		} catch (UnsupportedCommOperationException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		queue.clear();
+//		modelState.cleanSensors();
+//	}
 
 	@SuppressWarnings("incomplete-switch")
 	private void consumerMethod() throws InterruptedException {
 		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		while (isConsuming) {
-
 			if (halt) {
+
 				synchronized (consumerThread) {
 					consumerThread.wait();
 				}
@@ -555,11 +508,8 @@ public class Communicator // implements SerialPortEventListener
 					window.guiUpdater.notify();
 				}
 				halt = false;
-
 			}
-
 			while (currentSensor == SensorState.READY) {
-
 				if (queue.take() == 255 && !activeSensors.isEmpty()) {
 					synchronized (changingSensorLock) {
 						currentSensor = activeSensors.get(0);
@@ -586,9 +536,8 @@ public class Communicator // implements SerialPortEventListener
 					yCount = 0;
 				}
 			}
-			if (!inSensorQuery(currentSensor.IN_XYZ))
-				queue.take();// consume the end marker only if not already
-								// consumed in setXYZ
+			if (!inSensorQuery(SensorState.IN_XYZ))
+				queue.take();
 		}
 	}
 
@@ -602,18 +551,16 @@ public class Communicator // implements SerialPortEventListener
 		int input = queue.take();
 		boolean nextIsMarker = false;
 		while (!nextIsMarker) {
-			if (gotZero) { // if you're printing out arrays of zeroes
-							// (optimisation
-							// // on firmware)
+			if (gotZero) {
 				for (int z = 0; z < input; z++) {
 					modelState.setCurrentXYZ(xCount, yCount, 0);
 					// modelState.padCell[xCount][yCount] = 0;
 					yCount++;
-					if (yCount >= modelState.COLS) {
+					if (yCount >= Model.COLS) {
 						yCount = 0;
 						xCount++;
-						if (xCount >= modelState.ROWS) {
-							xCount = modelState.ROWS - 1;
+						if (xCount >= Model.ROWS) {
+							xCount = Model.ROWS - 1;
 						}
 					}
 				}
@@ -624,11 +571,11 @@ public class Communicator // implements SerialPortEventListener
 				modelState.setCurrentXYZ(xCount, yCount, input);
 				// modelState.padCell[xCount][yCount] = (queue.take());
 				yCount++;
-				if (yCount >= modelState.COLS) {
+				if (yCount >= Model.COLS) {
 					yCount = 0;
 					xCount++;
-					if (xCount >= modelState.ROWS) {
-						xCount = modelState.ROWS - 1;
+					if (xCount >= Model.ROWS) {
+						xCount = Model.ROWS - 1;
 					}
 				}
 			}
@@ -639,17 +586,15 @@ public class Communicator // implements SerialPortEventListener
 	}
 
 	public int getCurrentSideSensor(int i, int j) {
-		return modelState.currentSideSensor[i][j];
+		return Model.currentSideSensor[i][j];
 	}
 
 	public int getCurrentXYZ(int i, int j) {
-		return modelState.padCell[i][j];
+		return Model.padCell[i][j];
 	}
 
 	private void setSideSensor(int sensorID) throws InterruptedException {
 		modelState.setCurrentSideSensor(sensorID, SIDE_STRIP_FORCE, queue.take());
 		modelState.setCurrentSideSensor(sensorID, SIDE_STRIP_POSITION, queue.take());
-
 	}
-
 }

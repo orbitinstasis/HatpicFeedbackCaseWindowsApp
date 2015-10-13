@@ -1,4 +1,5 @@
 package HapticCaseWindows;
+
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.FlowLayout;
@@ -9,16 +10,12 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 
 public class SensorSelectorClass extends javax.swing.JFrame {
 	static JButton[] sensor = new JButton[5];
 
-	// protected JButton strip1But = new JButton();
-	// protected JButton strip2But = new JButton();
-	// protected JButton strip3But = new JButton();
-	// protected JButton strip4But = new JButton();
-	// protected JButton xyzBut = new JButton("XYZ");
 	protected static boolean sensorState[] = { true, false, false, false, true }; // CHANGE
 																					// THIS
 	FlowLayout experimentLayout = new FlowLayout();
@@ -33,8 +30,10 @@ public class SensorSelectorClass extends javax.swing.JFrame {
 		this.communicator = communicator;
 	}
 
+//	public static void close() {
+//		dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+//	}
 
-	
 	public void changeButText(int id) {
 		String temp;
 		Font onFont = null;
@@ -98,9 +97,12 @@ public class SensorSelectorClass extends javax.swing.JFrame {
 			final int j = i;
 			sensor[i].addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					communicator.changeSensorsOutsideSleepBySwitch(j);
-					changeButText(j);
-					window.sensorNumberLabel.setText(Integer.toString(communicator.getSensors()));
+					System.out.println(Communicator.isChangingSensors);
+					if (!Communicator.isChangingSensors) {
+						communicator.changeSensorsOutsideSleepBySwitch(j);
+						changeButText(j);
+						window.sensorNumberLabel.setText(Integer.toString(communicator.getSensors())); 
+					}
 				}
 			});
 		}
@@ -109,18 +111,29 @@ public class SensorSelectorClass extends javax.swing.JFrame {
 		pane.add(controls, BorderLayout.SOUTH);
 	}
 
-	public void toggleSensorButtons() {
-		if (communicator.getConnected() == true) {
-			for (int i = 0; i < 5; i++) {
-				sensor[i].setEnabled(true);
-			}
-		} else {
-			for (int i = 0; i < 5; i++) {
-				sensor[i].setEnabled(false);
-			}
+	public static void toggleSensorButtons(boolean tog) {
+//		System.out.println("toggle: " + tog);
+		for (int i = 0; i < 5; i++) {
+				sensor[i].setEnabled(tog);
+//				System.out.println(sensor[i]);
 		}
+	}
 
-
+	public static void resetButtonState() {
+		// we toggle in the controller, we just want to change text and boolean
+		Font offFont = null;
+		for (int i = 0; i < 5; i++) {
+			if (i > 3) {
+				sensor[i].setText("XYZ: Off");
+				offFont = new Font(sensor[i].getFont().getName(), Font.PLAIN, sensor[i].getFont().getSize());
+				sensor[i].setFont(offFont);
+			} else {
+				sensor[i].setText("Strip " + (i + 1) + ": Off");
+				offFont = new Font(sensor[i].getFont().getName(), Font.PLAIN, sensor[i].getFont().getSize());
+				sensor[i].setFont(offFont);
+			}
+			sensorState[i] = false;
+		}
 	}
 
 	/**
@@ -134,6 +147,7 @@ public class SensorSelectorClass extends javax.swing.JFrame {
 		// Set up the content pane.
 		frame.addComponentsToPane(frame.getContentPane());
 		// Display the window.
+		toggleSensorButtons(false);
 		frame.pack();
 		frame.setVisible(true);
 	}
@@ -156,4 +170,5 @@ public class SensorSelectorClass extends javax.swing.JFrame {
 			}
 		});
 	}
+
 }
