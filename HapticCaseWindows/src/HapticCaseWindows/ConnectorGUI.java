@@ -11,80 +11,79 @@ import javax.swing.text.DefaultCaret;
 @SuppressWarnings("serial")
 public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 
+	/*
+	 * GLOBALS
+	 */
+	public javax.swing.JButton btnConnect;
+	public javax.swing.JButton btnDisconnect;
+	public javax.swing.JButton btnShowSensorSelectorPane;
+	public javax.swing.JButton btnDebug;
+	public javax.swing.JButton btnShowVisualGui;
+	public javax.swing.JButton btnShowDataGui;
+	@SuppressWarnings("rawtypes")
+	public javax.swing.JComboBox cboxPorts;
+	private javax.swing.JLabel controlPanelLabel;
+	private javax.swing.JLabel logNameLabel;
+	public javax.swing.JLabel sensorNumberLabel;
+	private javax.swing.JLabel comPortSelectLabel;
+	private javax.swing.JScrollPane jScrollPane1;
+	private javax.swing.JScrollPane jScrollPane2;
+	private javax.swing.JTextArea jTextArea1;
+	public javax.swing.JTextArea txtLog;
 	// object for selecting my sensors
 	SensorSelectorGUI sensorSelector = null;
 	// Communicator object
 	Communicator communicator = null;
 	SensorOutputDataGUI datagui = null;
-	Thread guiUpdater = null;
+	SensorOutputVisualGUI visualgui = null;
+	Thread guiUpdater = new Thread(this);
 
-	/** Creates new form GUI */
+	/*
+	 * CONSTRUCTOR
+	 */
 	public ConnectorGUI() {
-		SensorSelectorGUI.mainHere();
-		SensorOutputDataGUI.numericGUImain();
 		// Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		initComponents();
 		createObjects();
-		datagui = new SensorOutputDataGUI();
-		guiUpdater = new Thread(this);
+		setResizable(false);
 		communicator.searchForPorts();
 		setAlwaysOnTop(true);
-		this.addWindowListener(new java.awt.event.WindowAdapter() {
+		addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override
 			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-				// Component frame = null;
-				// setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-				// if (JOptionPane.showConfirmDialog(frame,
-				// "Are you sure to close this window?", "Really Closing?",
-				// JOptionPane.YES_NO_OPTION,
-				// JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
-				// communicator.setReadingFlag(false);
 				if (communicator.getConnected())
 					communicator.disconnect();
 				System.exit(0);
-				// }
 			}
 		});
 		toggleAllControls();
 		pack();
-	}
-	//
-	// public void toggleSensorControls() {
-	// if (!increaseSensor.isEnabled()) {
-	// increaseSensor.setEnabled(true);
-	// decreaseSensor.setEnabled(true);
-	// } else {
-	// increaseSensor.setEnabled(false);
-	// decreaseSensor.setEnabled(false);
-	// }
-	// }
-
-	public void toggleAllControls() {
-		// sensorSelector.toggleSensorButtons();
-		if (communicator.getConnected() == true) {
-			btnLeftAccel.setEnabled(true);
-			btnLeftDecel.setEnabled(true);
-			increaseSensor.setEnabled(true);
-			decreaseSensor.setEnabled(true);
-
-			btnDisconnect.setEnabled(true);
-			btnConnect.setEnabled(false);
-			cboxPorts.setEnabled(false);
-		} else {
-			btnLeftAccel.setEnabled(false);
-			btnLeftDecel.setEnabled(false);
-			increaseSensor.setEnabled(false);
-			decreaseSensor.setEnabled(false);
-
-			btnDisconnect.setEnabled(false);
-			btnConnect.setEnabled(true);
-			cboxPorts.setEnabled(true);
+		sensorSelector.mainSensorSelectorGui(sensorSelector);
+		datagui.numericGUImain(datagui);
+		visualgui.visualGUImain(visualgui);
+		for (int i = 0; i < 5; i++) {
+			datagui.toggleReadingFont(i, sensorSelector.sensorState[i]);
 		}
 	}
 
 	private void createObjects() {
-		communicator = new Communicator(this, sensorSelector);
+		communicator = new Communicator(this);
 		sensorSelector = new SensorSelectorGUI(this, communicator);
+		datagui = new SensorOutputDataGUI(this);
+		visualgui = new SensorOutputVisualGUI(this);
+	}
+
+	public void toggleAllControls() {
+		// sensorSelector.toggleSensorButtons();
+		if (communicator.getConnected() == true) {
+			btnDisconnect.setEnabled(true);
+			btnConnect.setEnabled(false);
+			cboxPorts.setEnabled(false);
+		} else {
+			btnDisconnect.setEnabled(false);
+			btnConnect.setEnabled(true);
+			cboxPorts.setEnabled(true);
+		}
 	}
 
 	/**
@@ -100,28 +99,20 @@ public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 
 		jScrollPane1 = new javax.swing.JScrollPane();
 		jTextArea1 = new javax.swing.JTextArea();
-		jLabel1 = new javax.swing.JLabel();
-		jLabel2 = new javax.swing.JLabel();
-		jLabel3 = new javax.swing.JLabel();
+		controlPanelLabel = new javax.swing.JLabel();
+
 		sensorNumberLabel = new javax.swing.JLabel();
-		jLabels4a = new javax.swing.JLabel();
-		btnLeftAccel = new javax.swing.JButton();
-		btnLeftDecel = new javax.swing.JButton();
-		increaseSensor = new javax.swing.JButton();
-		jLabels4b = new javax.swing.JLabel();
-		decreaseSensor = new javax.swing.JButton();
+	
+		btnShowSensorSelectorPane = new javax.swing.JButton();
+		btnDebug = new javax.swing.JButton();
+		btnShowVisualGui = new javax.swing.JButton();
+btnShowDataGui = new javax.swing.JButton();
 		cboxPorts = new javax.swing.JComboBox();
-		jLabel5 = new javax.swing.JLabel();
+		comPortSelectLabel = new javax.swing.JLabel();
 		btnConnect = new javax.swing.JButton();
 		btnDisconnect = new javax.swing.JButton();
-		jLabel6 = new javax.swing.JLabel();
-		jLabels1a = new javax.swing.JLabel();
-		jLabels1b = new javax.swing.JLabel();
-		jLabels2a = new javax.swing.JLabel();
-		jLabels2b = new javax.swing.JLabel();
-		jLabels3a = new javax.swing.JLabel();
-		jLabels3b = new javax.swing.JLabel();
-		jLabel13 = new javax.swing.JLabel();
+
+		logNameLabel = new javax.swing.JLabel();
 		jScrollPane2 = new javax.swing.JScrollPane();
 		txtLog = new javax.swing.JTextArea();
 
@@ -132,55 +123,45 @@ public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 		setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 		setTitle("Haptic Feedback Case Control Panel");
 
-		jLabel1.setFont(new java.awt.Font("Tahoma", 1, 14));
-		jLabel1.setText("Haptic Feedback Case Control Panel");
-
-		jLabel2.setFont(new java.awt.Font("Tahoma", 1, 11));
-		jLabel2.setText("Throttle");
-
-		jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-		jLabel3.setText("Left");
+		controlPanelLabel.setFont(new java.awt.Font("Tahoma", 1, 14));
+		controlPanelLabel.setText("Haptic Feedback Case Control Panel");
 
 		sensorNumberLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
 		// jLabel4.setText(Integer.toString(communicator.getSensors()));
 
-		jLabels4a.setFont(new java.awt.Font("Tahoma", 1, 18));
-		jLabels4a.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-
-		btnLeftAccel.setText("/\\");
-		btnLeftAccel.addActionListener(new java.awt.event.ActionListener() {
+		btnShowSensorSelectorPane.setEnabled(false);
+		btnShowSensorSelectorPane.setText("Show Sensor Selector");
+		btnShowSensorSelectorPane.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				btnLeftAccelActionPerformed(evt);
+				performSensorSelectorGUI(evt);
 			}
 		});
 
-		btnLeftDecel.setText("\\/");
-		btnLeftDecel.addActionListener(new java.awt.event.ActionListener() {
+		btnDebug.setText("Debug");
+		btnDebug.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				btnLeftDecelActionPerformed(evt);
+				performDebugBtn(evt);
 			}
 		});
 
-		increaseSensor.setText("/\\");
-		increaseSensor.addActionListener(new java.awt.event.ActionListener() {
+		btnShowVisualGui.setEnabled(false);
+		btnShowVisualGui.setText("Show Visual GUI");
+		btnShowVisualGui.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				performIncreaseSensor(evt);
+				performTogVisualGUI(evt);
 			}
 		});
 
-		jLabels4b.setFont(new java.awt.Font("Tahoma", 1, 18));
-		jLabels4b.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-		// lblRight.setText("0");
-
-		decreaseSensor.setText("\\/");
-		decreaseSensor.addActionListener(new java.awt.event.ActionListener() {
+		btnShowDataGui.setEnabled(false);
+		btnShowDataGui.setText("Show Numeric Data");
+		btnShowDataGui.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				performDecreaseSensor(evt);
+				performTogDataGUI(evt);
 			}
 		});
 
-		jLabel5.setFont(new java.awt.Font("Tahoma", 1, 11));
-		jLabel5.setText("Select the COM Port");
+		comPortSelectLabel.setFont(new java.awt.Font("Tahoma", 1, 11));
+		comPortSelectLabel.setText("Select the COM Port");
 
 		btnConnect.setText("Connect");
 		btnConnect.addActionListener(new java.awt.event.ActionListener() {
@@ -201,23 +182,8 @@ public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 			}
 		});
 
-		jLabel6.setFont(new java.awt.Font("Tahoma", 1, 11));
-		jLabel6.setText("Controls");
-
-		jLabels1a.setText("Q - Accelerate Left");
-
-		jLabels1b.setText("A - Decelerate Left");
-
-		jLabels2a.setText("W - Accelerate Both");
-
-		jLabels2b.setText("S - Decelerate Both");
-
-		jLabels3a.setText("D - Decelerate Right");
-
-		jLabels3b.setText("E - Accelerate Right");
-
-		jLabel13.setFont(new java.awt.Font("Tahoma", 1, 11));
-		jLabel13.setText("Log");
+		logNameLabel.setFont(new java.awt.Font("Tahoma", 1, 11));
+		logNameLabel.setText("Log");
 
 		DefaultCaret caret = (DefaultCaret) txtLog.getCaret();
 
@@ -234,7 +200,7 @@ public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 		getContentPane().setLayout(layout);
 		layout.setHorizontalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(layout
 				.createSequentialGroup().addContainerGap()
-				.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(jLabel1)
+				.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(controlPanelLabel)
 						.addGroup(layout.createSequentialGroup()
 								.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
 										.addGroup(layout.createSequentialGroup()
@@ -244,78 +210,82 @@ public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 												.addComponent(btnConnect)
 												.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 												.addComponent(btnDisconnect))
-										.addComponent(jLabel5).addComponent(jLabel2)
+										.addComponent(comPortSelectLabel)
+//										.addComponent(jLabel2)
 										.addGroup(layout
 												.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
 												.addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout
 														.createSequentialGroup()
-														.addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE,
-																37, javax.swing.GroupLayout.PREFERRED_SIZE)
+//														.addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE,
+//																37, javax.swing.GroupLayout.PREFERRED_SIZE)
 														.addPreferredGap(
 																javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
 														.addComponent(sensorNumberLabel,
 																javax.swing.GroupLayout.DEFAULT_SIZE,
 																javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-												.addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout
-														.createSequentialGroup()
-														.addGroup(layout
+												.addGroup(javax.swing.GroupLayout.Alignment.LEADING,
+														layout.createSequentialGroup().addGroup(layout
 																.createParallelGroup(
 																		javax.swing.GroupLayout.Alignment.LEADING)
-																.addComponent(btnLeftDecel)
+																.addComponent(btnDebug)
 																.addGroup(layout
 																		.createParallelGroup(
 																				javax.swing.GroupLayout.Alignment.TRAILING,
 																				false)
-																		.addComponent(jLabels4a,
-																				javax.swing.GroupLayout.Alignment.LEADING,
-																				javax.swing.GroupLayout.DEFAULT_SIZE,
-																				javax.swing.GroupLayout.DEFAULT_SIZE,
-																				Short.MAX_VALUE)
-																		.addComponent(btnLeftAccel,
+//																		.addComponent(jLabels4a,
+//																				javax.swing.GroupLayout.Alignment.LEADING,
+//																				javax.swing.GroupLayout.DEFAULT_SIZE,
+//																				javax.swing.GroupLayout.DEFAULT_SIZE,
+//																				Short.MAX_VALUE)
+																		.addComponent(btnShowSensorSelectorPane,
 																				javax.swing.GroupLayout.Alignment.LEADING)))
 														.addPreferredGap(
 																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 														.addGroup(layout
 																.createParallelGroup(
 																		javax.swing.GroupLayout.Alignment.LEADING)
-																.addComponent(decreaseSensor)
+																.addComponent(btnShowDataGui)
 																.addGroup(layout
 																		.createParallelGroup(
 																				javax.swing.GroupLayout.Alignment.TRAILING,
 																				false)
-																		.addComponent(jLabels4b,
-																				javax.swing.GroupLayout.Alignment.LEADING,
-																				javax.swing.GroupLayout.DEFAULT_SIZE,
-																				javax.swing.GroupLayout.DEFAULT_SIZE,
-																				Short.MAX_VALUE)
-																		.addComponent(increaseSensor,
+//																		.addComponent(jLabels4b,
+//																				javax.swing.GroupLayout.Alignment.LEADING,
+//																				javax.swing.GroupLayout.DEFAULT_SIZE,
+//																				javax.swing.GroupLayout.DEFAULT_SIZE,
+//																				Short.MAX_VALUE)
+																		.addComponent(btnShowVisualGui,
 																				javax.swing.GroupLayout.Alignment.LEADING)))))
-										.addComponent(jLabel6).addGroup(
+//										.addComponent(jLabel6)
+										.addGroup(
 												layout.createSequentialGroup()
 														.addGroup(layout
 																.createParallelGroup(
 																		javax.swing.GroupLayout.Alignment.LEADING)
-																.addComponent(jLabels1b).addComponent(jLabels1a))
+//																.addComponent(jLabels1b).addComponent(jLabels1a)
+																)
 														.addPreferredGap(
 																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 												.addGroup(layout
 														.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-														.addComponent(jLabels2b).addComponent(jLabels2a))
+//														.addComponent(jLabels2b).addComponent(jLabels2a)
+														)
 												.addGap(3, 3, 3)
 												.addGroup(layout
 														.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-														.addComponent(jLabels3a).addComponent(jLabels3b))))
+//														.addComponent(jLabels3a).addComponent(jLabels3b)
+														)))
 								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 								.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-										.addComponent(jLabel13).addComponent(jScrollPane2,
+										.addComponent(logNameLabel).addComponent(jScrollPane2,
 												javax.swing.GroupLayout.PREFERRED_SIZE, 333,
 												javax.swing.GroupLayout.PREFERRED_SIZE))))
 				.addContainerGap()));
 		layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-				.addGroup(layout.createSequentialGroup().addContainerGap().addComponent(jLabel1)
+				.addGroup(layout.createSequentialGroup().addContainerGap().addComponent(controlPanelLabel)
 						.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-								.addComponent(jLabel5).addComponent(jLabel13))
+								.addComponent(comPortSelectLabel).addComponent(logNameLabel))
 				.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 				.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
 						.addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -325,73 +295,89 @@ public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 										javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
 								.addComponent(btnConnect).addComponent(btnDisconnect))
 								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-								.addComponent(jLabel2)
+//								.addComponent(jLabel2)
 								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 								.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-										.addComponent(jLabel3).addComponent(sensorNumberLabel))
+//										.addComponent(jLabel3)
+										.addComponent(sensorNumberLabel))
 								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 								.addGroup(
 										layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-												.addGroup(layout.createSequentialGroup().addComponent(btnLeftAccel)
+												.addGroup(layout.createSequentialGroup()
+														.addComponent(btnShowSensorSelectorPane)
 														.addPreferredGap(
 																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-												.addComponent(jLabels4a)
+//												.addComponent(jLabels4a)
 												.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-												.addComponent(btnLeftDecel)).addGroup(
-														layout.createSequentialGroup().addComponent(increaseSensor)
+												.addComponent(btnDebug)).addGroup(
+														layout.createSequentialGroup().addComponent(btnShowVisualGui)
 																.addPreferredGap(
 																		javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																.addComponent(jLabels4b)
+//																.addComponent(jLabels4b)
 																.addPreferredGap(
 																		javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																.addComponent(decreaseSensor)))
+																.addComponent(btnShowDataGui)))
 								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-								.addComponent(jLabel6)
+//								.addComponent(jLabel6)
 								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addGroup(
 										layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-												.addGroup(layout.createSequentialGroup().addComponent(jLabels3b)
+												.addGroup(layout.createSequentialGroup()
+//														.addComponent(jLabels3b)
 														.addPreferredGap(
 																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-														.addComponent(jLabels3a))
-												.addGroup(layout.createSequentialGroup().addComponent(jLabels1a)
+//														.addComponent(jLabels3a)
+														)
+												.addGroup(layout.createSequentialGroup()
+//														.addComponent(jLabels1a)
 														.addPreferredGap(
 																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-														.addComponent(jLabels1b))
-												.addGroup(layout.createSequentialGroup().addComponent(jLabels2a)
+//														.addComponent(jLabels1b)
+														)
+												.addGroup(layout.createSequentialGroup()
+//														.addComponent(jLabels2a)
 														.addPreferredGap(
 																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-														.addComponent(jLabels2b)))))
+//														.addComponent(jLabels2b)
+														))))
 				.addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)));
 
 		pack();
 	}// </editor-fold>//GEN-END:initComponents
 
-	private void btnLeftAccelActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnLeftAccelActionPerformed
+	private void performSensorSelectorGUI(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnLeftAccelActionPerformed
+		if (!sensorSelector.isVisible()) {
+			btnShowSensorSelectorPane.setEnabled(false);
+			sensorSelector.setVisible(true);
+			sensorSelector.pack();
+		}
+	}
 
-	}// GEN-LAST:event_btnLeftAccelActionPerformed
-
-	private void btnLeftDecelActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnLeftDecelActionPerformed
-		System.out.println(communicator.consumerThread.isAlive());
-		System.out.println(communicator.getConnected());
-		System.out.println(communicator.getSensors());
-		System.out.println(guiUpdater.isAlive());
-		System.out.println(communicator.isConsuming);
+	private void performDebugBtn(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnLeftDecelActionPerformed
+		System.out.println("Sensor selector visible: " + sensorSelector.isVisible() + "\ndatagui visibile: "
+				+ datagui.isVisible() + "\nVisual gui visible: " + visualgui.isVisible());
 	}// GEN-LAST:event_btnLeftDecelActionPerformed
 
-	private void performIncreaseSensor(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnRightAccelActionPerformed
+	private void performTogVisualGUI(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnRightAccelActionPerformed
+		if (!visualgui.isVisible()) {
+			btnShowVisualGui.setEnabled(false);
+			visualgui.setVisible(true);
+			visualgui.pack();
+		}
+	}
 
-	}// GEN-LAST:event_btnRightAccelActionPerformed
-
-	private void performDecreaseSensor(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnRightDecelActionPerformed
-
-	}// GEN-LAST:event_btnRightDecelActionPerformed
+	private void performTogDataGUI(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnRightDecelActionPerformed
+		if (!datagui.isVisible()) {
+			btnShowDataGui.setEnabled(false);
+			datagui.setVisible(true);
+			datagui.pack();
+		}
+	}
 
 	private void btnConnectActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnConnectActionPerformed
 		if (!communicator.isConsuming) {
 			communicator.connect();
 			if (communicator.getConnected() == true) {
 				if (communicator.initIOStream() == true) {
-
 					communicator.setReadingFlag(true);
 					communicator.consumerThread.start();
 					guiUpdater.start();
@@ -406,23 +392,19 @@ public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 
 					communicator.initListener();
 					wake();
-
 				}
-
 			}
 			pack();
 		}
-	}// GEN-LAST:event_btnConnectActionPerformed
+	}
 
 	protected void wake() {
-
 		synchronized (communicator.consumerThread) {
 			communicator.consumerThread.notify();
 		}
 		synchronized (guiUpdater) {
 			guiUpdater.notify();
 		}
-
 	}
 
 	private void btnDisconnectActionPerformed(java.awt.event.ActionEvent evt) throws InterruptedException {// GEN-FIRST:event_btnDisconnectActionPerformed
@@ -433,44 +415,11 @@ public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 			txtLog.append(logText + "\n");
 		}
 		communicator.halt = true;
-
-	}// GEN-LAST:event_btnDisconnectActionPerformed
-
-	// Variables declaration - do not modify//GEN-BEGIN:variables
-	public javax.swing.JButton btnConnect;
-	public javax.swing.JButton btnDisconnect;
-	public javax.swing.JButton btnLeftAccel;
-	public javax.swing.JButton btnLeftDecel;
-	public javax.swing.JButton increaseSensor;
-	public javax.swing.JButton decreaseSensor;
-	@SuppressWarnings("rawtypes")
-	public javax.swing.JComboBox cboxPorts;
-	private javax.swing.JLabel jLabel1;
-
-	private javax.swing.JLabel jLabel13;
-	private javax.swing.JLabel jLabel2;
-	private javax.swing.JLabel jLabel3;
-	public javax.swing.JLabel sensorNumberLabel;
-	private javax.swing.JLabel jLabel5;
-	private javax.swing.JLabel jLabel6;
-
-	private javax.swing.JScrollPane jScrollPane1;
-	private javax.swing.JScrollPane jScrollPane2;
-	private javax.swing.JTextArea jTextArea1;
-	public javax.swing.JLabel jLabels1a;
-	public javax.swing.JLabel jLabels1b;
-	public javax.swing.JLabel jLabels2a;
-	public javax.swing.JLabel jLabels2b;
-	public javax.swing.JLabel jLabels3a;
-	public javax.swing.JLabel jLabels3b;
-	public javax.swing.JLabel jLabels4a;
-	public javax.swing.JLabel jLabels4b;
-	public javax.swing.JTextArea txtLog;
-	// End of variables declaration//GEN-END:variables
+	}
 
 	@Override
 	public void run() {
-//		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+		// Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		while (communicator.isConsuming) {
 			// System.out.println("i'm cons in gui");
 			if (communicator.halt) // NOT DEBUG
@@ -482,11 +431,31 @@ public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 					e1.printStackTrace();
 				}
 			if (!communicator.isAsleep) { // DEBUG
-//				try {
-//					Thread.sleep(100);
-//				} catch (InterruptedException e) {
-//					e.printStackTrace();
-//				}
+
+				for (int i = 0; i < 4; i++) {
+					for (int j = 0; j < 2; j++) {
+						int tempInt = communicator.getCurrentSideSensor(i, j);
+						String tempString = new String();
+						if (tempInt < 10) {
+							tempString = "00";
+						} else if (tempInt < 100) {
+							tempString = "0";
+						}
+
+						SensorOutputDataGUI.sideSensor[i][j].setText(tempString + tempInt);
+					}
+				}
+
+				for (int i = 0; i < 10; i++) {
+					for (int j = 0; j < 16; j++) {
+						SensorOutputDataGUI.padCellData[i][j].setText("" + communicator.getCurrentXYZ(i, j));
+					}
+				}
+				// try {
+				// Thread.sleep(100);
+				// } catch (InterruptedException e) {
+				// e.printStackTrace();
+				// }
 
 				// NOT DEBUG
 				// s1
@@ -524,73 +493,56 @@ public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 
 				// DEBUGGER ONLY I.E. TO SYSOUT
 
-//				for (int i = 0; i < communicator.activeSensors.size(); i++) {
-//					System.out.println(communicator.activeSensors.get(i).toString());
-//				}
-//				try {
-//					Thread.sleep(500);
-//				} catch (InterruptedException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-				
-				
-		    	for (int i = 0; i < 4; i++) {
-		    		for (int j = 0; j < 2; j++) {
-		    			int tempInt = communicator.getCurrentSideSensor(i, j);
-		    			String tempString = new String();
-						if (tempInt < 10) {
-							tempString = "00";
-						} else if (tempInt < 100) {
-							tempString = "0";
-						}
-						
-		    			SensorOutputDataGUI.sideSensor[i][j].setText(tempString+tempInt);
-		    		}
-		    	}
-				
-		    	for (int i = 0; i < 10; i++) {
-		    		for (int j = 0; j < 16; j++) {
-		    			SensorOutputDataGUI.padCellData[i][j].setText(""+communicator.getCurrentXYZ(i, j));
-		    		}
-		    	}
+				// for (int i = 0; i < communicator.activeSensors.size(); i++) {
+				// System.out.println(communicator.activeSensors.get(i).toString());
+				// }
+				// try {
+				// Thread.sleep(500);
+				// } catch (InterruptedException e) {
+				// // TODO Auto-generated catch block
+				// e.printStackTrace();
+				// }
 
 				// s1
-//				if (communicator.inSensorQuery(SensorState.IN_STRIP_1))
-//					System.out.println("s1: " + communicator.getCurrentSideSensor(0, 0) + " "
-//							+ communicator.getCurrentSideSensor(0, 1));
-//				// s2
-//				if (communicator.inSensorQuery(SensorState.IN_STRIP_2))
-//					System.out.println(" s2: " + communicator.getCurrentSideSensor(1, 0) + " "
-//							+ communicator.getCurrentSideSensor(1, 1));
-//				// s3
-//				if (communicator.inSensorQuery(SensorState.IN_STRIP_3))
-//					System.out.println(" s3: " + communicator.getCurrentSideSensor(2, 0) + " "
-//							+ communicator.getCurrentSideSensor(2, 1));
-//				// s4
-//				if (communicator.inSensorQuery(SensorState.IN_STRIP_4))
-//					System.out.println(" s4: " + communicator.getCurrentSideSensor(3, 0) + " "
-//							+ communicator.getCurrentSideSensor(3, 1));
-//				// XYZ
-//				if (communicator.inSensorQuery(SensorState.IN_XYZ)) { // if
-//					// we're
-//					// in
-//					// the
-//					// xyz
-//					for (int i = 0; i < Model.ROWS; i++) {
-//						for (int j = 0; j < Model.COLS; j++) {
-//							int temp = communicator.getCurrentXYZ(i, j);
-//							if (temp < 10) {
-//								System.out.print(" ");
-//							} else if (temp < 100) {
-//								System.out.print(" ");
-//							}
-//							System.out.print(temp + " ");
-//						}
-//						System.out.println();
-//					}
-//				}
-//				System.out.println();
+				// if (communicator.inSensorQuery(SensorState.IN_STRIP_1))
+				// System.out.println("s1: " +
+				// communicator.getCurrentSideSensor(0, 0) + " "
+				// + communicator.getCurrentSideSensor(0, 1));
+				// // s2
+				// if (communicator.inSensorQuery(SensorState.IN_STRIP_2))
+				// System.out.println(" s2: " +
+				// communicator.getCurrentSideSensor(1, 0) + " "
+				// + communicator.getCurrentSideSensor(1, 1));
+				// // s3
+				// if (communicator.inSensorQuery(SensorState.IN_STRIP_3))
+				// System.out.println(" s3: " +
+				// communicator.getCurrentSideSensor(2, 0) + " "
+				// + communicator.getCurrentSideSensor(2, 1));
+				// // s4
+				// if (communicator.inSensorQuery(SensorState.IN_STRIP_4))
+				// System.out.println(" s4: " +
+				// communicator.getCurrentSideSensor(3, 0) + " "
+				// + communicator.getCurrentSideSensor(3, 1));
+				// // XYZ
+				// if (communicator.inSensorQuery(SensorState.IN_XYZ)) { // if
+				// // we're
+				// // in
+				// // the
+				// // xyz
+				// for (int i = 0; i < Model.ROWS; i++) {
+				// for (int j = 0; j < Model.COLS; j++) {
+				// int temp = communicator.getCurrentXYZ(i, j);
+				// if (temp < 10) {
+				// System.out.print(" ");
+				// } else if (temp < 100) {
+				// System.out.print(" ");
+				// }
+				// System.out.print(temp + " ");
+				// }
+				// System.out.println();
+				// }
+				// }
+				// System.out.println();
 
 				// DEBUG end
 

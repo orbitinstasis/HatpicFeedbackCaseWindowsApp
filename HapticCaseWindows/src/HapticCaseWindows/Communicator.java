@@ -1,15 +1,16 @@
 package HapticCaseWindows;
 /* TODO: 
- *		seperate the controller code in communicator from communicator (make a new class)
- *use that multithreaded swing components for gui OR JAVAFX WITH ORACLES SOMETHING SOMETING
- * * 		disable sensor buttons when not connected ! (add to toggle method)
- *				why does sensorSelector.toggleSensorButtons();not work ? ??
- 		---> why can't i toggle the sensor buttons for half a second? 
- *
- *turn toggleAllControls back on in here adn gui ! 
- *
+ *		seperate the controller code in communicator from communicator (make a new class) 		
  *modularise the jframes, so when you close the sensor button pane, you want disconnected 
  *and to reopen it by 'new pane' when you reconnect. do the same with the sensor data gui
+ *
+ *don't think i need to sync when taking/reading from model since using 8bit values per reading. do further research.
+ *	->> i think i do need to sync --> get weird data when spam on off 
+ *-->>> additionally have a peek when writing to the model, turn that current sensor off if you read END_MARKER
+ *
+ *anchor the jframes together
+ *
+ *seperate each gui's thing into its own runner and use the same thread sleep technique 
  *
  *at teh end we want to have the model data as some retrievable data (and status things) probably in a FILE format for other shits to access!
  */
@@ -65,12 +66,11 @@ public class Communicator // implements SerialPortEventListener
 	private boolean gotZero = false;
 	// passed from main GUI
 	ConnectorGUI window = null;
-	SensorSelectorGUI sensorSelector = null;
+//	SensorSelectorGUI sensorSelector = null;
 	// a string for recording what goes on in the program
 	// this string is written to the GUI
 	String logText = "";
 	boolean halt = false;
-	static boolean isChangingSensors = false;
 	Thread consumerThread = new Thread(new Runnable() {
 		public void run() {
 			try {
@@ -95,16 +95,14 @@ public class Communicator // implements SerialPortEventListener
 	protected static enum SensorState {
 		IN_STRIP_1, IN_STRIP_2, IN_STRIP_3, IN_STRIP_4, IN_XYZ, READY;
 	}
-
 	// the timeout value for connecting with the port
 	final static int TIMEOUT = 2000;
 	final static int SLEEP_BAUD_RATE = 9600;
 	final static int AWAKE_BAUD_RATE = 115200;
 	final static int END_MARKER = 0xFF;
 	final static int INIT_SLEEP_SETTING = 0;
-	final static int MAX_BUFFER = 32;
-	protected static int SIDE_STRIP_FORCE = 0;
-	protected static int SIDE_STRIP_POSITION = 1;
+	protected final static int SIDE_STRIP_FORCE = 0;
+	protected final static int SIDE_STRIP_POSITION = 1;
 	private static final int FIRST_STRIP = 0;
 	private static final int SECOND_STRIP = 1;
 	private static final int THIRD_STRIP = 2;
@@ -113,9 +111,10 @@ public class Communicator // implements SerialPortEventListener
 	/*
 	 * CONSTRUCTOR
 	 */
-	public Communicator(ConnectorGUI window, SensorSelectorGUI sensorSelector) {
+	public Communicator(ConnectorGUI window) {
 		this.window = window;
-		this.sensorSelector = sensorSelector;
+		window.sensorNumberLabel.setText("Sensors: " + Integer.toBinaryString(getSensors()));
+//		this.sensorSelector = sensorSelector;
 	}
 
 	public int getSensors() {
@@ -123,12 +122,8 @@ public class Communicator // implements SerialPortEventListener
 	}
 
 	public void changeSensorsOutsideSleepBySwitch(int desiredSensor) {
-		// SensorSelectorClass.toggleSensorButtons(false);
-		isChangingSensors = true;
 		synchronized (changingSensorLock) {
 			activeSensors.clear();// clear active sensor list
-			makeDataLabelsNotVisible();
-
 			currentSensor = SensorState.READY;
 			if ((sensors & (0b00000001 << desiredSensor)) == 0) {
 				sensors = (sensors & ~(1 << desiredSensor)) | (1 << desiredSensor);
@@ -191,44 +186,23 @@ public class Communicator // implements SerialPortEventListener
 			window.txtLog.setForeground(Color.BLACK);
 			window.txtLog.append(logText + "\n");
 		}
-		// SensorSelectorClass.toggleSensorButtons(true);
-		isChangingSensors = false;
 		window.pack();
 	}
 
-	private void makeDataLabelsNotVisible() { // we want to replace this -- it's
-												// probably not even necessary
-		window.jLabels1a.setVisible(false);
-		window.jLabels1b.setVisible(false);
-		window.jLabels2a.setVisible(false);
-		window.jLabels2b.setVisible(false);
-		window.jLabels3a.setVisible(false);
-		window.jLabels3b.setVisible(false);
-		window.jLabels4a.setVisible(false);
-		window.jLabels4b.setVisible(false);
-	}
 
 	private void setSensorState(int sensorID) {
 		switch (sensorID) {
 		case 0b00000001:
 			activeSensors.add(SensorState.IN_STRIP_1);
-			window.jLabels1a.setVisible(true);
-			window.jLabels1b.setVisible(true);
 			break;
 		case 0b00000010:
 			activeSensors.add(SensorState.IN_STRIP_2);
-			window.jLabels2a.setVisible(true);
-			window.jLabels2b.setVisible(true);
 			break;
 		case 0b00000100:
 			activeSensors.add(SensorState.IN_STRIP_3);
-			window.jLabels3a.setVisible(true);
-			window.jLabels3b.setVisible(true);
 			break;
 		case 0b00001000:
 			activeSensors.add(SensorState.IN_STRIP_4);
-			window.jLabels4a.setVisible(true);
-			window.jLabels4b.setVisible(true);
 			break;
 		case 0b00010000:
 			activeSensors.add(SensorState.IN_XYZ);
@@ -271,7 +245,7 @@ public class Communicator // implements SerialPortEventListener
 			window.txtLog.setForeground(Color.BLACK);
 			window.txtLog.append(logText + "\n");
 			window.toggleAllControls();
-			SensorSelectorGUI.toggleSensorButtons(true);
+			window.sensorSelector.toggleSensorButtons(true);
 		} catch (PortInUseException e) {
 			logText = selectedPort + " is in use. (" + e.toString() + ")";
 			window.txtLog.setForeground(Color.RED);
@@ -314,7 +288,6 @@ public class Communicator // implements SerialPortEventListener
 			currentSensor = SensorState.READY;
 			synchronized (changingSensorLock) {
 				activeSensors.clear();// clear active sensor list
-				makeDataLabelsNotVisible();
 				modelState.cleanSensors();
 				queue.clear();
 				writeData(sensors);
@@ -352,7 +325,7 @@ public class Communicator // implements SerialPortEventListener
 	public void disconnect() {
 		synchronized (changingSensorLock) {
 
-			SensorSelectorGUI.resetButtonState();
+			window.sensorSelector.resetButtonState();
 			currentSensor = SensorState.READY;
 			modelState.cleanSensors();
 			sensors = 0;
@@ -386,7 +359,7 @@ public class Communicator // implements SerialPortEventListener
 			}
 			setConnected(false);
 			window.toggleAllControls();
-			SensorSelectorGUI.toggleSensorButtons(false);
+			window.sensorSelector.toggleSensorButtons(false);
 
 			logText = "Disconnected.\n";
 			window.txtLog.setForeground(Color.red);

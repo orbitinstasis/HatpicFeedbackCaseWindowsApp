@@ -6,53 +6,44 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 
 @SuppressWarnings("serial")
-public class SensorSelectorGUI extends javax.swing.JFrame  {
-	static JButton[] sensor = new JButton[5];
-
-	protected static boolean sensorState[] = { true, false, false, false, true }; // CHANGE
-																					// THIS
+public class SensorSelectorGUI extends javax.swing.JFrame {
+	/*
+	 * GLOBALS
+	 */
+	protected static long lastHit;
+	JButton[] sensor = new JButton[5];
+	protected boolean sensorState[] = { false, false, false, false, false }; 
 	FlowLayout experimentLayout = new FlowLayout();
-
+	private SensorSelectorGUI sensorSelector;
 	// passed from main GUI
 	static ConnectorGUI window = null;
 	static Communicator communicator = null;
 
+	/*
+	 * CONSTRUCTOR
+	 */
 	public SensorSelectorGUI(ConnectorGUI window, Communicator communicator) {
 		super("Sensor Selector");
+		lastHit = System.currentTimeMillis();
 		SensorSelectorGUI.window = window;
 		SensorSelectorGUI.communicator = communicator;
 		setResizable(false);
-		setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
-		/*
-		 * DEAL WITH DISCONNECTING HERE BUT DON'T FUCKING CLOSE THE SHIT THIS IS JUT A COPY PASTA
-		 */
-//		this.addWindowListener(new java.awt.event.WindowAdapter() {
-//			@Override
-//			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-//				// Component frame = null;
-//				// setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-//				// if (JOptionPane.showConfirmDialog(frame,
-//				// "Are you sure to close this window?", "Really Closing?",
-//				// JOptionPane.YES_NO_OPTION,
-//				// JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
-//				// communicator.setReadingFlag(false);
-//				if (communicator.getConnected())
-//					communicator.disconnect();
-//				System.exit(0);
-//				// }
-//			}
-//		});
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+				setVisible(false);
+				window.btnShowSensorSelectorPane.setEnabled(true);
+				dispose();
+			}
+		});
 	}
-
-//	public static void close() {
-//		dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-//	}
 
 	public void changeButText(int id) {
 		String temp;
@@ -61,7 +52,6 @@ public class SensorSelectorGUI extends javax.swing.JFrame  {
 			temp = "XYZ: ";
 		else
 			temp = "Strip " + (id + 1) + ": ";
-
 		if (sensorState[id] == false) {
 			sensorState[id] = true;
 			temp = temp.concat("On");
@@ -82,8 +72,6 @@ public class SensorSelectorGUI extends javax.swing.JFrame  {
 		experimentLayout.setAlignment(FlowLayout.TRAILING);
 		JPanel controls = new JPanel();
 		controls.setLayout(new FlowLayout());
-
-		// init buttons
 		for (int i = 0; i < 5; i++) {
 			boolean isOn = ((communicator.getSensors() & (0b00000001 << i)) > 0);
 			sensorState[i] = isOn;
@@ -110,35 +98,32 @@ public class SensorSelectorGUI extends javax.swing.JFrame  {
 					sensor[i].setFont(offFont);
 				}
 			}
-
 			compsToExperiment.add(sensor[i]);
 			final int j = i;
 			sensor[i].addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-//					System.out.println(Communicator.isChangingSensors);
-					if (!Communicator.isChangingSensors) {
+					long now = System.currentTimeMillis();
+					if ((now - lastHit) > (500)) {
 						communicator.changeSensorsOutsideSleepBySwitch(j);
 						changeButText(j);
-						window.sensorNumberLabel.setText(Integer.toString(communicator.getSensors())); 
+						window.datagui.toggleReadingFont(j, sensorState[j]);
+						window.sensorNumberLabel.setText("Sensors: " + Integer.toBinaryString(communicator.getSensors()));
+						lastHit = System.currentTimeMillis();
 					}
 				}
 			});
 		}
-
 		pane.add(compsToExperiment, BorderLayout.CENTER);
 		pane.add(controls, BorderLayout.SOUTH);
 	}
 
-	public static void toggleSensorButtons(boolean tog) {
-//		System.out.println("toggle: " + tog);
+	public void toggleSensorButtons(boolean tog) {
 		for (int i = 0; i < 5; i++) {
-				sensor[i].setEnabled(tog);
-//				System.out.println(sensor[i]);
+			sensor[i].setEnabled(tog);
 		}
 	}
 
-	public static void resetButtonState() {
-		// we toggle in the controller, we just want to change text and boolean
+	public void resetButtonState() {
 		Font offFont = null;
 		for (int i = 0; i < 5; i++) {
 			if (i > 3) {
@@ -154,28 +139,19 @@ public class SensorSelectorGUI extends javax.swing.JFrame  {
 		}
 	}
 
-	public void changeVisibility(boolean in) {
-		
-	}
-	
 	/**
 	 * Create the GUI and show it. For thread safety, this method should be
 	 * invoked from the event dispatch thread.
 	 */
-	public static void createAndShowGUI() {
-		// Create and set up the window.
-		SensorSelectorGUI sensorSelectorFrame = new SensorSelectorGUI(window, communicator);
-		
-		// Set up the content pane.
-		sensorSelectorFrame.addComponentsToPane(sensorSelectorFrame.getContentPane());
-		// Display the window.
+	public void createAndShowGUI() {
+		sensorSelector.addComponentsToPane(sensorSelector.getContentPane());
 		toggleSensorButtons(false);
-		sensorSelectorFrame.pack();
-		sensorSelectorFrame.setVisible(true);
+		sensorSelector.pack();
+		sensorSelector.setVisible(true);
 	}
 
-	public static void mainHere() {
-		/* Use an appropriate Look and Feel */
+	public void mainSensorSelectorGui(SensorSelectorGUI sensorSelector) {
+		this.sensorSelector = sensorSelector;
 		try {
 			// UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
 			UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
@@ -184,7 +160,7 @@ public class SensorSelectorGUI extends javax.swing.JFrame  {
 		}
 		/* Turn off metal's use of bold fonts */
 		UIManager.put("swing.boldMetal", Boolean.FALSE);
-		// Schedule a job for the event dispatchi thread:
+		// Schedule a job for the event dispatch thread:
 		// creating and showing this application's GUI.
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
@@ -192,5 +168,4 @@ public class SensorSelectorGUI extends javax.swing.JFrame  {
 			}
 		});
 	}
-
 }

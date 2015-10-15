@@ -1,5 +1,7 @@
 package HapticCaseWindows;
 
+import java.awt.event.WindowAdapter;
+
 import javax.swing.UIManager;
 
 /*
@@ -13,11 +15,36 @@ THE X,Y SIZE OF A xyz vancas block is 25x25
 @SuppressWarnings("serial")
 public class SensorOutputVisualGUI extends javax.swing.JFrame {
 
+	/*
+	 * GLOBAL
+	 */
+    private java.awt.Canvas rearXYZCanvas;
+    private javax.swing.JPanel rearXYZPanel;
+    private java.awt.Canvas side1Canvas;
+    private java.awt.Canvas side2Canvas;
+    private java.awt.Canvas side3Canvas;
+    private java.awt.Canvas side4Canvas;
+    private javax.swing.JPanel sideSensor1Panel;
+    private javax.swing.JPanel sideSensor2Panel;
+    private javax.swing.JPanel sideSensor3Panel;
+    private javax.swing.JPanel sideSensor4Panel;  
+    ConnectorGUI window = null;
+    SensorOutputVisualGUI visualgui = null;
     /**
-     * Creates new form SensorOutput
+     * CONSRTUCTOR
+     * @param window 
      */
-    public SensorOutputVisualGUI() {
+    public SensorOutputVisualGUI(ConnectorGUI window) {
+    	this.window = window;
         initComponents();
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+				setVisible(false);
+				window.btnShowVisualGui.setEnabled(true);
+				dispose();
+			}
+		});
     }
 
     /**
@@ -40,10 +67,8 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
         rearXYZPanel = new javax.swing.JPanel();
         rearXYZCanvas = new java.awt.Canvas();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Sensor Data Visual Display");
         setBackground(new java.awt.Color(255, 255, 255));
-        setEnabled(false);
         setForeground(java.awt.Color.white);
         setResizable(false);
 
@@ -158,7 +183,8 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void visualGUImain(String args[]) {
+    public void visualGUImain(SensorOutputVisualGUI visualgui) {
+    	this.visualgui = visualgui;
 		try {
 			// UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
 			UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
@@ -169,22 +195,10 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new SensorOutputVisualGUI().setVisible(true);
+                visualgui.setVisible(true);
             }
         });
     }
 
-    // Variables declaration - do not modify                     
-//    private javax.swing.JPanel jPanel3;
-    private java.awt.Canvas rearXYZCanvas;
-    private javax.swing.JPanel rearXYZPanel;
-    private java.awt.Canvas side1Canvas;
-    private java.awt.Canvas side2Canvas;
-    private java.awt.Canvas side3Canvas;
-    private java.awt.Canvas side4Canvas;
-    private javax.swing.JPanel sideSensor1Panel;
-    private javax.swing.JPanel sideSensor2Panel;
-    private javax.swing.JPanel sideSensor3Panel;
-    private javax.swing.JPanel sideSensor4Panel;
-    // End of variables declaration                   
+            
 }
