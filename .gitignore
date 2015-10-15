@@ -18,9 +18,9 @@ backup before controller class/*
 .metadata/*
 
 .recommenders/*
-*.log
+*/*.log
 
-.classpath
+*/.classpath
 .project
 *.form
-bin/*
+*/bin/*

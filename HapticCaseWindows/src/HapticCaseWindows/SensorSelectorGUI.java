@@ -8,12 +8,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.Timer;
 import javax.swing.UIManager;
 
-public class SensorSelectorClass extends javax.swing.JFrame {
+@SuppressWarnings("serial")
+public class SensorSelectorGUI extends javax.swing.JFrame  {
 	static JButton[] sensor = new JButton[5];
 
 	protected static boolean sensorState[] = { true, false, false, false, true }; // CHANGE
@@ -21,13 +20,34 @@ public class SensorSelectorClass extends javax.swing.JFrame {
 	FlowLayout experimentLayout = new FlowLayout();
 
 	// passed from main GUI
-	static GUI window = null;
+	static ConnectorGUI window = null;
 	static Communicator communicator = null;
 
-	public SensorSelectorClass(GUI window, Communicator communicator) {
+	public SensorSelectorGUI(ConnectorGUI window, Communicator communicator) {
 		super("Sensor Selector");
-		this.window = window;
-		this.communicator = communicator;
+		SensorSelectorGUI.window = window;
+		SensorSelectorGUI.communicator = communicator;
+		setResizable(false);
+		setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+		/*
+		 * DEAL WITH DISCONNECTING HERE BUT DON'T FUCKING CLOSE THE SHIT THIS IS JUT A COPY PASTA
+		 */
+//		this.addWindowListener(new java.awt.event.WindowAdapter() {
+//			@Override
+//			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+//				// Component frame = null;
+//				// setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+//				// if (JOptionPane.showConfirmDialog(frame,
+//				// "Are you sure to close this window?", "Really Closing?",
+//				// JOptionPane.YES_NO_OPTION,
+//				// JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
+//				// communicator.setReadingFlag(false);
+//				if (communicator.getConnected())
+//					communicator.disconnect();
+//				System.exit(0);
+//				// }
+//			}
+//		});
 	}
 
 //	public static void close() {
@@ -37,7 +57,6 @@ public class SensorSelectorClass extends javax.swing.JFrame {
 	public void changeButText(int id) {
 		String temp;
 		Font onFont = null;
-		Font offFont = null;
 		if (id == 4)
 			temp = "XYZ: ";
 		else
@@ -51,7 +70,6 @@ public class SensorSelectorClass extends javax.swing.JFrame {
 		} else {
 			sensorState[id] = false;
 			temp = temp.concat("Off");
-			offFont = new Font(sensor[id].getFont().getName(), Font.PLAIN, sensor[id].getFont().getSize());
 			sensor[id].setFont(onFont);
 		}
 		sensor[id].setText(temp);
@@ -97,7 +115,7 @@ public class SensorSelectorClass extends javax.swing.JFrame {
 			final int j = i;
 			sensor[i].addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					System.out.println(Communicator.isChangingSensors);
+//					System.out.println(Communicator.isChangingSensors);
 					if (!Communicator.isChangingSensors) {
 						communicator.changeSensorsOutsideSleepBySwitch(j);
 						changeButText(j);
@@ -136,20 +154,24 @@ public class SensorSelectorClass extends javax.swing.JFrame {
 		}
 	}
 
+	public void changeVisibility(boolean in) {
+		
+	}
+	
 	/**
 	 * Create the GUI and show it. For thread safety, this method should be
 	 * invoked from the event dispatch thread.
 	 */
 	public static void createAndShowGUI() {
 		// Create and set up the window.
-		SensorSelectorClass frame = new SensorSelectorClass(window, communicator);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		SensorSelectorGUI sensorSelectorFrame = new SensorSelectorGUI(window, communicator);
+		
 		// Set up the content pane.
-		frame.addComponentsToPane(frame.getContentPane());
+		sensorSelectorFrame.addComponentsToPane(sensorSelectorFrame.getContentPane());
 		// Display the window.
 		toggleSensorButtons(false);
-		frame.pack();
-		frame.setVisible(true);
+		sensorSelectorFrame.pack();
+		sensorSelectorFrame.setVisible(true);
 	}
 
 	public static void mainHere() {
