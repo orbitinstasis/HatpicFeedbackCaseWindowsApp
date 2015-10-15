@@ -8,6 +8,9 @@ package HapticCaseWindows;
  *
  *turn toggleAllControls back on in here adn gui ! 
  *
+ *modularise the jframes, so when you close the sensor button pane, you want disconnected 
+ *and to reopen it by 'new pane' when you reconnect. do the same with the sensor data gui
+ *
  *at teh end we want to have the model data as some retrievable data (and status things) probably in a FILE format for other shits to access!
  */
 
@@ -119,7 +122,7 @@ public class Communicator // implements SerialPortEventListener
 			}
 			writeData(sensors);
 			try {
-				Thread.sleep(500);
+				Thread.sleep(50);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -411,32 +414,6 @@ public class Communicator // implements SerialPortEventListener
 		isConsuming = in;
 	}
 
-	/**
-	 * Handles the input coming from the serial port. A new line character is
-	 * treated as the end of a block in this example.
-	 */
-	public class SerialReader implements SerialPortEventListener {
-		private InputStream in;
-
-		public SerialReader(InputStream in) {
-			this.in = in;
-		}
-
-		public void serialEvent(SerialPortEvent arg0) {
-			int data;
-
-			try {
-				Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
-				while (consumerThread.isAlive() && ((data = in.read()) > -1)) {
-					queue.add(data);
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(-1);
-			}
-		}
-	}
-
 	Thread consumerThread = new Thread(new Runnable() {
 		public void run() {
 			try {
@@ -596,5 +573,31 @@ public class Communicator // implements SerialPortEventListener
 	private void setSideSensor(int sensorID) throws InterruptedException {
 		modelState.setCurrentSideSensor(sensorID, SIDE_STRIP_FORCE, queue.take());
 		modelState.setCurrentSideSensor(sensorID, SIDE_STRIP_POSITION, queue.take());
+	}
+	
+	/**
+	 * Handles the input coming from the serial port. A new line character is
+	 * treated as the end of a block in this example.
+	 */
+	public class SerialReader implements SerialPortEventListener {
+		private InputStream in;
+
+		public SerialReader(InputStream in) {
+			this.in = in;
+			Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+		}
+
+		public void serialEvent(SerialPortEvent arg0) {
+			int data;
+
+			try {
+				while (consumerThread.isAlive() && ((data = in.read()) > -1)) {
+					queue.add(data);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+		}
 	}
 }
