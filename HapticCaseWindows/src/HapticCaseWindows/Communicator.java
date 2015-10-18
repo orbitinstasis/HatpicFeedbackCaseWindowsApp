@@ -1,3 +1,23 @@
+/*
+	Haptic Feedback Case Java Control Panel
+	Copyright (C) 2015:
+         Ben Kazemi, ebaykazemi@googlemail.com
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
 package HapticCaseWindows;
 /* TODO: 
  *
@@ -8,6 +28,8 @@ package HapticCaseWindows;
  *each data/visualgui needs its own runner.
  *
  *FIX THREAD HANDLING - THEY'RE NOT WAITING AS INTENDED
+ *
+ *For the canvas blocks, the main canvas for the xyz has been sized so THE X,Y SIZE of each xyz block is 25x25
  */
 
 import java.awt.Color;
@@ -26,10 +48,10 @@ import gnu.io.PortInUseException;
 import gnu.io.SerialPort;
 import gnu.io.UnsupportedCommOperationException;
 
-public class Communicator // implements SerialPortEventListener
+public class Communicator
 {
 	/*
-	 * GLOBALS
+	 **************************************************************  GLOBALS
 	 */
 	public boolean isAsleep = true; // we want this in a file so other programs
 	// can query it
@@ -60,7 +82,7 @@ public class Communicator // implements SerialPortEventListener
 	protected boolean halt = true;
 
 	/*
-	 * CONSTANTS
+	 **************************************************************  CONSTANTS
 	 */
 	// the timeout value for connecting with the port
 	private final static int TIMEOUT = 2000;
@@ -69,8 +91,9 @@ public class Communicator // implements SerialPortEventListener
 
 	private final static int INIT_SLEEP_SETTING = 0;
 
-	/*
-	 * CONSTRUCTOR
+	/**
+	 * ******************************************************************** CONSTRUCTOR 
+	 * @param window
 	 */
 	public Communicator(ControlPanelGui window) {
 		this.window = window;
@@ -78,9 +101,25 @@ public class Communicator // implements SerialPortEventListener
 		window.sensorNumberLabel.setText("Sensors: " + controller.sensors);
 	}
 
-	// search for all the serial ports
-	// pre: none
-	// post: adds all the found ports to a combo box on the GUI
+	/*
+	 **************************************************************  METHODS 
+	 */
+	
+	/**
+	 * Adds integer 'data' to the array blocking queue 'queue'
+	 * @param data
+	 */
+	public void addToQueue(int data) {
+		queue.add(data);
+	}
+	
+	/*
+	 ************************************************************** MAIN COMMUNICATOR METHODS 
+	 */
+	
+	/**
+	 * Searches and adds all the found ports to a combo box on the GUI
+	 */
 	@SuppressWarnings("unchecked")
 	public void searchForPorts() {
 		ports = CommPortIdentifier.getPortIdentifiers();
@@ -94,10 +133,15 @@ public class Communicator // implements SerialPortEventListener
 		}
 	}
 
-	// connect to the selected port in the combo box
-	// pre: ports are already found by using the searchForPorts method
-	// post: the connected comm port is stored in commPort, otherwise,
-	// an exception is generated
+	/*
+	 **************************************************************  CONNECT 
+	 */
+	
+	/**
+	 * connect to the selected port in the combo box
+	 * pre: ports are already found by using the searchForPorts method
+	 * post: the connected comm port is stored in commPort, otherwise an exception is generated
+	 */
 	public void connect() {
 		String selectedPort = (String) window.cboxPorts.getSelectedItem();
 		selectedPortIdentifier = (CommPortIdentifier) portMap.get(selectedPort);
@@ -126,11 +170,15 @@ public class Communicator // implements SerialPortEventListener
 		}
 	}
 
-	// open the input and output streams
-	// pre: an open port
-	// post: initialized intput and output streams for use to communicate data
+
+	/**
+	 * open the input and output streams
+	 * pre: an open port
+	 * post: initialised input and output streams for use to communicate data
+	 * 
+	 * @return successful
+	 */
 	public boolean initIOStream() {
-		// return value for whather opening the streams is successful or not
 		boolean successful = false;
 		try {
 			input = serialPort.getInputStream();
@@ -145,14 +193,14 @@ public class Communicator // implements SerialPortEventListener
 		}
 	}
 
-	// starts the event listener that knows whenever data is available to be
-	// read
-	// pre: an open serial port
-	// post: an event listener for the serial port that knows when data is
-	// recieved
+	/**
+	 * starts the event listener that knows whenever data is available to be read
+	 * pre: an open serial port
+	 * post: an event listener for the serial port that knows when data is received
+	 */
 	public void initListener() {
 		try {
-			serialPort.addEventListener(new SerialReader(this, window, input));
+			serialPort.addEventListener(new SerialReaderConsumer(this, window, input));
 			serialPort.notifyOnDataAvailable(true);
 			controller.setReady();
 			synchronized (changingSensorLock) {
@@ -188,9 +236,15 @@ public class Communicator // implements SerialPortEventListener
 
 	}
 
-	// disconnect the serial port
-	// pre: an open serial port
-	// post: clsoed serial port
+	/*
+	 **************************************************************  DISCONNECT 
+	 */
+
+	/**
+	 * disconnect the serial port
+	 * pre: an open serial port
+	 * post: closed serial port
+	 */
 	public void disconnect() {
 		synchronized (changingSensorLock) {
 			halt = true;
@@ -239,18 +293,48 @@ public class Communicator // implements SerialPortEventListener
 
 	}
 
+	/*
+	 **************************************************************  GETTERS / SETTERS  
+	 */
+	
+	/**
+	 * know if  the com port is connected to this app 
+	 * @return connected 
+	 */
 	final public boolean getConnected() {
 		return bConnected;
 	}
 
+	/**
+	 * sets connected flag 
+	 * @param bConnected
+	 */
 	public void setConnected(boolean bConnected) {
 		this.bConnected = bConnected;
 	}
+	
+	/**
+	 * sets isConsuming high or low
+	 * 
+	 * This is only set high once when the connect button is pressed
+	 * and only set low before system.exit is called
+	 * @param in
+	 */
+	public void setReadingFlag(boolean in) {
+		isConsuming = in;
+	}
 
-	// method that can be called to send data
-	// pre style="font-size: 11px;": open serial port
-	// post: data sent to the other device
-	public void writeData(int input) {
+	/*
+	 **************************************************************  WRITE DATA 
+	 */
+	
+	/**
+	 * method that can be called to send data 
+	 * pre open serial port 
+	 * post: data sent to the other device
+	 * @param input
+	 */
+	protected void writeData(int input) {
 		final int temp = input & 0xFFFF;
 		Thread thread = new Thread() {
 			@Override
@@ -272,13 +356,5 @@ public class Communicator // implements SerialPortEventListener
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public void setReadingFlag(boolean in) {
-		isConsuming = in;
-	}
-
-	public void addToQueue(int data) {
-		queue.add(data);
 	}
 }

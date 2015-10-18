@@ -1,3 +1,23 @@
+/*
+	Haptic Feedback Case Java Control Panel
+	Copyright (C) 2015:
+         Ben Kazemi, ebaykazemi@googlemail.com
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
 package HapticCaseWindows;
 
 import java.awt.Font;
@@ -6,14 +26,10 @@ import java.awt.event.WindowAdapter;
 import javax.swing.JLabel;
 import javax.swing.UIManager;
 
-/**
- *
- * @author Orbital
- */
 @SuppressWarnings("serial")
 public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable {
 	/*
-	 * GLOBALS
+	 * ******************************************************************************GLOBALS
 	 */
 	// JLabels
 	static protected JLabel[][] sideSensor;
@@ -32,7 +48,7 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 	Thread dataGuiUpdater = new Thread(this);
 
 	/**
-	 * CONSTRUCTOR
+	 ********************************************************************************* CONSTRUCTOR
 	 * 
 	 * @param connectorGUI
 	 */
@@ -49,35 +65,46 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 		});
 	}
 
+	/**
+	 * **************************************************************** RUNNER 
+	 */
 	@Override
 	public void run() {
 		while (window.communicator.isConsuming) {
-			if (!window.communicator.isAsleep) { // DEBUG
+			if (!window.communicator.isAsleep) {
 				for (int i = 0; i < 4; i++) {
 					for (int j = 0; j < 2; j++) {
-						int tempInt = window.communicator.controller.getCurrentSideSensor(i, j);
+						int tempInt = window.communicator.controller.modelState.getCurrentSideSensor(i, j);
 						String tempString = new String();
 						if (tempInt < 10) {
 							tempString = "00";
 						} else if (tempInt < 100) {
 							tempString = "0";
 						}
-
 						SensorOutputDataGUI.sideSensor[i][j].setText(tempString + tempInt);
 					}
 				}
 				for (int i = 0; i < 10; i++) {
 					for (int j = 0; j < 16; j++) {
 						SensorOutputDataGUI.padCellData[i][j]
-								.setText("" + window.communicator.controller.getCurrentXYZ(i, j));
+								.setText("" + window.communicator.controller.modelState.getCurrentXYZ(i, j));
 					}
 				}
 			}
 		}
 	}
 
+	/*
+	 * ************************************************************************************** METHODS 
+	 */
+	
+	/**
+	 * changes jlabels font and text depending on sensor state 
+	 * 
+	 * @param sensor number 
+	 * @param isOn
+	 */
 	protected void toggleReadingFont(int i, boolean isOn) {
-		// System.out.println("sensor: " + in + " is " + state);
 		if (i < 4) {
 			if (isOn) {
 				sensorLabel[i].setText("Sensor " + (i + 1) + " On");
@@ -122,7 +149,13 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 		}
 	}
 
+	/*
+	 * **********************************************************************************MAIN METHOD 
+	 */
+	
 	/**
+	 * Main method that instantiates this class and datagui
+	 * 
 	 * @param datagui
 	 */
 	public void numericGUImain(SensorOutputDataGUI datagui) {
@@ -140,7 +173,17 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 		});
 	}
 
+	/*
+	 * *****************************************************************************  COMPONENT INITALISATION 
+	 */
+	
+	/**
+	 * initialises components and adds them to the layout container
+	 */
 	private void initComponents() {
+		/*
+		 * *********************************************BUTTON/LABEL INSTANTIATION**************************************
+		 */
 		forceLabel = new JLabel[4];
 		positionLabel = new JLabel[4];
 		sensorLabel = new JLabel[4];
@@ -187,30 +230,18 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 						.addGroup(rearXYZDataPanelLayout.createSequentialGroup()
 								.addGroup(rearXYZDataPanelLayout
 										.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING))
-						// .addComponent(rearPadLabel,
-						// javax.swing.GroupLayout.PREFERRED_SIZE,
-						// javax.swing.GroupLayout.DEFAULT_SIZE,
-						// javax.swing.GroupLayout.PREFERRED_SIZE))
-						// .addComponent(label1,
-						// javax.swing.GroupLayout.PREFERRED_SIZE,
-						// javax.swing.GroupLayout.DEFAULT_SIZE,
-						// javax.swing.GroupLayout.PREFERRED_SIZE))
 						.addGap(0, 170, Short.MAX_VALUE)));
 
 		rearXYZDataPanelLayout
 				.setVerticalGroup(rearXYZDataPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
 						.addGroup(rearXYZDataPanelLayout.createSequentialGroup()
-								// .addComponent(rearPadLabel,
-								// javax.swing.GroupLayout.PREFERRED_SIZE,
-								// javax.swing.GroupLayout.DEFAULT_SIZE,
-								// javax.swing.GroupLayout.PREFERRED_SIZE)
 								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-								// .addComponent(label1,
-								// javax.swing.GroupLayout.PREFERRED_SIZE,
-								// javax.swing.GroupLayout.DEFAULT_SIZE,
-								// javax.swing.GroupLayout.PREFERRED_SIZE)
 								.addGap(0, 350, Short.MAX_VALUE)));
 
+		/*
+		 ****************************************************** DRAW ALL REAR PAD JLABELS TO CONTAINER **********************
+		 */
+		
 		for (int i = 0; i < 10; i++) {
 			for (int j = 0; j < 16; j++) {
 				rearXYZDataPanel.add(padCellData[i][j]);
@@ -219,6 +250,10 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 			}
 		}
 
+		/*
+		 ****************************************************** JFrame components Layout **********************
+		 */
+		
 		javax.swing.GroupLayout sensorDataMainPanelLayout = new javax.swing.GroupLayout(sensorDataMainPanel);
 		sensorDataMainPanel.setLayout(sensorDataMainPanelLayout);
 		sensorDataMainPanelLayout.setHorizontalGroup(
@@ -304,7 +339,7 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 
 		.addComponent(rearXYZDataPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE,
 				Short.MAX_VALUE));
-
+		
 		sensorDataMainPanelLayout.setVerticalGroup(sensorDataMainPanelLayout
 				.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
 				.addGroup(sensorDataMainPanelLayout.createSequentialGroup().addGroup(sensorDataMainPanelLayout
@@ -389,7 +424,6 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 								javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
 						.addComponent(rearXYZDataPanel, javax.swing.GroupLayout.PREFERRED_SIZE,
 								javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)));
-
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
 		getContentPane().setLayout(layout);
 		layout.setHorizontalGroup(
@@ -400,5 +434,4 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 				javax.swing.GroupLayout.PREFERRED_SIZE));
 		pack();
 	}
-
 }

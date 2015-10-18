@@ -1,3 +1,23 @@
+/*
+	Haptic Feedback Case Java Control Panel
+	Copyright (C) 2015:
+         Ben Kazemi, ebaykazemi@googlemail.com
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
 package HapticCaseWindows;
 
 import java.awt.BorderLayout;
@@ -14,26 +34,33 @@ import javax.swing.UIManager;
 
 @SuppressWarnings("serial")
 public class SensorSelectorGUI extends javax.swing.JFrame {
-	/*
-	 * GLOBALS
-	 */
-	protected static long lastHit;
-	JButton[] sensor = new JButton[5];
-	protected boolean sensorState[] = { false, false, false, false, false };
-	FlowLayout experimentLayout = new FlowLayout();
-	private SensorSelectorGUI sensorSelector;
-	// passed from main GUI
-	static ControlPanelGui window = null;
-	static Communicator communicator = null;
 
 	/*
-	 * CONSTRUCTOR
+	 ************************************************************* GLOBALS
+	 */
+	protected static long lastHit;
+	private JButton[] sensor = new JButton[5];
+	private FlowLayout experimentLayout = new FlowLayout();
+	private SensorSelectorGUI sensorSelector;
+	// passed from main GUI
+	protected ControlPanelGui window = null;
+	protected Communicator communicator = null;
+
+	/*
+	 ************************************************************* CONSTANTS
+	 */
+	private static int SENSOR_CHANGE_LOCKOUT_TIME = 100;
+
+	/**
+	 * ***********************************************************CONSTRUCTOR 
+	 * @param window
+	 * @param communicator
 	 */
 	public SensorSelectorGUI(ControlPanelGui window, Communicator communicator) {
 		super("Sensor Selector");
 		lastHit = System.currentTimeMillis();
-		SensorSelectorGUI.window = window;
-		SensorSelectorGUI.communicator = communicator;
+		this.window = window;
+		this.communicator = communicator;
 		setResizable(false);
 		addWindowListener(new WindowAdapter() {
 			@Override
@@ -45,6 +72,44 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 		});
 	}
 
+	/*
+	 * ************************************** METHODS ******************************
+	 */
+	
+	/**
+	 * Toggles enabled state of all sensor buttons
+	 */
+	public void toggleSensorButtons(boolean tog) {
+		for (int i = 0; i < 5; i++) {
+			sensor[i].setEnabled(tog);
+		}
+	}
+
+	/**
+	 * Re-initialises all button states depending on hardware state
+	 */
+	public void resetButtonState() {
+		Font offFont = null;
+		for (int i = 0; i < 5; i++) {
+			if (i > 3) {
+				sensor[i].setText("XYZ: Off");
+				offFont = new Font(sensor[i].getFont().getName(), Font.PLAIN, sensor[i].getFont().getSize());
+				sensor[i].setFont(offFont);
+			} else {
+				sensor[i].setText("Strip " + (i + 1) + ": Off");
+				offFont = new Font(sensor[i].getFont().getName(), Font.PLAIN, sensor[i].getFont().getSize());
+				sensor[i].setFont(offFont);
+			}
+			communicator.controller.modelState.sensorState[i] = false;
+		}
+	}
+	
+	/**
+	 * Changes the sensor selector button that has just been pressed change
+	 * depends on existing button/hardware state
+	 * 
+	 * Font and text is changed
+	 */
 	public void changeButText(int id) {
 		String temp;
 		Font onFont = null;
@@ -52,13 +117,13 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 			temp = "XYZ: ";
 		else
 			temp = "Strip " + (id + 1) + ": ";
-		if (sensorState[id] == false) {
-			sensorState[id] = true;
+		if (communicator.controller.modelState.sensorState[id] == false) {
+			communicator.controller.modelState.sensorState[id] = true;
 			temp = temp.concat("On");
 			onFont = new Font(sensor[id].getFont().getName(), Font.BOLD, sensor[id].getFont().getSize());
 			sensor[id].setFont(onFont);
 		} else {
-			sensorState[id] = false;
+			communicator.controller.modelState.sensorState[id] = false;
 			temp = temp.concat("Off");
 			sensor[id].setFont(onFont);
 		}
@@ -66,6 +131,16 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 		this.pack();
 	}
 
+	/*
+	 * ****************************COMPONENT LAYOUT AND ACTION LISTENERS *************************
+	 */
+	
+	/**
+	 * instantiates container pane with all buttons with flowLayout depending on
+	 * initialised hardware state attaches action listener which itself has a
+	 * time lock --> each button can be pressed once per
+	 * SENSOR_CHANGE_LOCKOUT_TIME
+	 */
 	private void addComponentsToPane(final Container pane) {
 		final JPanel compsToExperiment = new JPanel();
 		compsToExperiment.setLayout(experimentLayout);
@@ -74,7 +149,7 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 		controls.setLayout(new FlowLayout());
 		for (int i = 0; i < 5; i++) {
 			boolean isOn = ((communicator.controller.sensors & (0b00000001 << i)) > 0);
-			sensorState[i] = isOn;
+			communicator.controller.modelState.sensorState[i] = isOn;
 			Font onFont = null;
 			Font offFont = null;
 			if (i > 3) {
@@ -103,11 +178,11 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 			sensor[i].addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					long now = System.currentTimeMillis();
-					if ((now - lastHit) > (100)) {
+					if ((now - lastHit) > (SENSOR_CHANGE_LOCKOUT_TIME)) {
 						communicator.controller.changeSensorsOutsideSleepBySwitch(j);
 						synchronized (communicator.changingSensorLock) {
 							changeButText(j);
-							window.datagui.toggleReadingFont(j, sensorState[j]);
+							window.datagui.toggleReadingFont(j, communicator.controller.modelState.sensorState[j]);
 							window.sensorNumberLabel
 									.setText("Sensors: " + Integer.toBinaryString(communicator.controller.sensors));
 						}
@@ -120,27 +195,9 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 		pane.add(controls, BorderLayout.SOUTH);
 	}
 
-	public void toggleSensorButtons(boolean tog) {
-		for (int i = 0; i < 5; i++) {
-			sensor[i].setEnabled(tog);
-		}
-	}
-
-	public void resetButtonState() {
-		Font offFont = null;
-		for (int i = 0; i < 5; i++) {
-			if (i > 3) {
-				sensor[i].setText("XYZ: Off");
-				offFont = new Font(sensor[i].getFont().getName(), Font.PLAIN, sensor[i].getFont().getSize());
-				sensor[i].setFont(offFont);
-			} else {
-				sensor[i].setText("Strip " + (i + 1) + ": Off");
-				offFont = new Font(sensor[i].getFont().getName(), Font.PLAIN, sensor[i].getFont().getSize());
-				sensor[i].setFont(offFont);
-			}
-			sensorState[i] = false;
-		}
-	}
+	/*
+	 * ************************************************************* MAIN METHODS ******************************
+	 */
 
 	/**
 	 * Create the GUI and show it. For thread safety, this method should be
@@ -153,6 +210,11 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 		sensorSelector.setVisible(true);
 	}
 
+	/**
+	 * called by constructor of controklPanelGui
+	 * 
+	 * Initialises this class and invokes the JFrame
+	 */
 	public void mainSensorSelectorGui(SensorSelectorGUI sensorSelector) {
 		this.sensorSelector = sensorSelector;
 		try {
