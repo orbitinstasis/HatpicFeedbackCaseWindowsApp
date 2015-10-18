@@ -28,13 +28,13 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
     private javax.swing.JPanel sideSensor2Panel;
     private javax.swing.JPanel sideSensor3Panel;
     private javax.swing.JPanel sideSensor4Panel;  
-    ConnectorGUI window = null;
+    ControlPanelGui window = null;
     SensorOutputVisualGUI visualgui = null;
     /**
      * CONSRTUCTOR
      * @param window 
      */
-    public SensorOutputVisualGUI(ConnectorGUI window) {
+    public SensorOutputVisualGUI(ControlPanelGui window) {
     	this.window = window;
         initComponents();
 		addWindowListener(new WindowAdapter() {

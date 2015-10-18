@@ -11,7 +11,7 @@ import javax.swing.UIManager;
  * @author Orbital
  */
 @SuppressWarnings("serial")
-public class SensorOutputDataGUI extends javax.swing.JFrame {
+public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable {
 	/*
 	 * GLOBALS
 	 */
@@ -27,15 +27,16 @@ public class SensorOutputDataGUI extends javax.swing.JFrame {
 	private javax.swing.JPanel rearXYZDataPanel;
 	private javax.swing.JPanel sensorDataMainPanel;
 	// Passed in from gui
-	ConnectorGUI window = null;
+	ControlPanelGui window = null;
 	SensorOutputDataGUI datagui = null;
+	Thread dataGuiUpdater = new Thread(this);
 
 	/**
 	 * CONSTRUCTOR
 	 * 
 	 * @param connectorGUI
 	 */
-	public SensorOutputDataGUI(ConnectorGUI window) {
+	public SensorOutputDataGUI(ControlPanelGui window) {
 		this.window = window;
 		initComponents();
 		addWindowListener(new WindowAdapter() {
@@ -48,40 +49,78 @@ public class SensorOutputDataGUI extends javax.swing.JFrame {
 		});
 	}
 
-	protected void toggleReadingFont(int i, boolean isOn){
-//    	System.out.println("sensor: " + in + " is " + state);
+	@Override
+	public void run() {
+		while (window.communicator.isConsuming) {
+			if (!window.communicator.isAsleep) { // DEBUG
+				for (int i = 0; i < 4; i++) {
+					for (int j = 0; j < 2; j++) {
+						int tempInt = window.communicator.controller.getCurrentSideSensor(i, j);
+						String tempString = new String();
+						if (tempInt < 10) {
+							tempString = "00";
+						} else if (tempInt < 100) {
+							tempString = "0";
+						}
+
+						SensorOutputDataGUI.sideSensor[i][j].setText(tempString + tempInt);
+					}
+				}
+				for (int i = 0; i < 10; i++) {
+					for (int j = 0; j < 16; j++) {
+						SensorOutputDataGUI.padCellData[i][j]
+								.setText("" + window.communicator.controller.getCurrentXYZ(i, j));
+					}
+				}
+			}
+		}
+	}
+
+	protected void toggleReadingFont(int i, boolean isOn) {
+		// System.out.println("sensor: " + in + " is " + state);
 		if (i < 4) {
 			if (isOn) {
-				sensorLabel[i].setText("Sensor "+ (i+1) + " On");
-				sensorLabel[i].setFont(new Font(sensorLabel[i].getFont().getName(), Font.BOLD, sensorLabel[i].getFont().getSize()));
-				forceLabel[i].setFont(new Font(forceLabel[i].getFont().getName(), Font.BOLD, forceLabel[i].getFont().getSize()));
-				positionLabel[i].setFont(new Font(positionLabel[i].getFont().getName(), Font.BOLD, positionLabel[i].getFont().getSize()));
-				sideSensor[i][0].setFont(new Font(sideSensor[i][0].getFont().getName(), Font.BOLD, sideSensor[i][0].getFont().getSize()));
-				sideSensor[i][1].setFont(new Font(sideSensor[i][1].getFont().getName(), Font.BOLD, sideSensor[i][1].getFont().getSize()));
-				
+				sensorLabel[i].setText("Sensor " + (i + 1) + " On");
+				sensorLabel[i].setFont(
+						new Font(sensorLabel[i].getFont().getName(), Font.BOLD, sensorLabel[i].getFont().getSize()));
+				forceLabel[i].setFont(
+						new Font(forceLabel[i].getFont().getName(), Font.BOLD, forceLabel[i].getFont().getSize()));
+				positionLabel[i].setFont(new Font(positionLabel[i].getFont().getName(), Font.BOLD,
+						positionLabel[i].getFont().getSize()));
+				sideSensor[i][0].setFont(new Font(sideSensor[i][0].getFont().getName(), Font.BOLD,
+						sideSensor[i][0].getFont().getSize()));
+				sideSensor[i][1].setFont(new Font(sideSensor[i][1].getFont().getName(), Font.BOLD,
+						sideSensor[i][1].getFont().getSize()));
 			} else {
-				sensorLabel[i].setText("Sensor "+ (i+1) + " Off");
-				sensorLabel[i].setFont(new Font(sensorLabel[i].getFont().getName(), Font.ITALIC, sensorLabel[i].getFont().getSize()));
-				forceLabel[i].setFont(new Font(forceLabel[i].getFont().getName(), Font.ITALIC, forceLabel[i].getFont().getSize()));
-				positionLabel[i].setFont(new Font(positionLabel[i].getFont().getName(), Font.ITALIC, positionLabel[i].getFont().getSize()));
+				sensorLabel[i].setText("Sensor " + (i + 1) + " Off");
+				sensorLabel[i].setFont(
+						new Font(sensorLabel[i].getFont().getName(), Font.ITALIC, sensorLabel[i].getFont().getSize()));
+				forceLabel[i].setFont(
+						new Font(forceLabel[i].getFont().getName(), Font.ITALIC, forceLabel[i].getFont().getSize()));
+				positionLabel[i].setFont(new Font(positionLabel[i].getFont().getName(), Font.ITALIC,
+						positionLabel[i].getFont().getSize()));
 				sideSensor[i][0].setText("000");
 				sideSensor[i][0].setText("000");
-				sideSensor[i][0].setFont(new Font(sideSensor[i][0].getFont().getName(), Font.ITALIC, sideSensor[i][0].getFont().getSize()));
-				sideSensor[i][1].setFont(new Font(sideSensor[i][1].getFont().getName(), Font.ITALIC, sideSensor[i][1].getFont().getSize()));
+				sideSensor[i][0].setFont(new Font(sideSensor[i][0].getFont().getName(), Font.ITALIC,
+						sideSensor[i][0].getFont().getSize()));
+				sideSensor[i][1].setFont(new Font(sideSensor[i][1].getFont().getName(), Font.ITALIC,
+						sideSensor[i][1].getFont().getSize()));
 			}
 		} else {
 			for (int k = 0; k < 10; k++) {
 				for (int j = 0; j < 16; j++) {
 					if (isOn)
-						padCellData[k][j].setFont(new Font(padCellData[k][j].getFont().getName(), Font.BOLD, padCellData[k][j].getFont().getSize()));
+						padCellData[k][j].setFont(new Font(padCellData[k][j].getFont().getName(), Font.BOLD,
+								padCellData[k][j].getFont().getSize()));
 					else {
 						padCellData[k][j].setText("0");
-						padCellData[k][j].setFont(new Font(padCellData[k][j].getFont().getName(), Font.ITALIC, padCellData[k][j].getFont().getSize()));
+						padCellData[k][j].setFont(new Font(padCellData[k][j].getFont().getName(), Font.ITALIC,
+								padCellData[k][j].getFont().getSize()));
 					}
 				}
 			}
 		}
-    }
+	}
 
 	/**
 	 * @param datagui
@@ -361,4 +400,5 @@ public class SensorOutputDataGUI extends javax.swing.JFrame {
 				javax.swing.GroupLayout.PREFERRED_SIZE));
 		pack();
 	}
+
 }

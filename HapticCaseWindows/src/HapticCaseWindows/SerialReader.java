@@ -15,7 +15,7 @@ public class SerialReader implements SerialPortEventListener {
 	private InputStream in;
 	Communicator communicator = null;
 	
-	public SerialReader(Communicator communicator, ConnectorGUI window, InputStream in) {
+	public SerialReader(Communicator communicator, ControlPanelGui window, InputStream in) {
 		this.in = in;
 		this.communicator = communicator;
 		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);

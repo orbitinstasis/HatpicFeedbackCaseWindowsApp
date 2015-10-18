@@ -9,7 +9,7 @@ import java.awt.Color;
 import javax.swing.text.DefaultCaret;
 
 @SuppressWarnings("serial")
-public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
+public class ControlPanelGui extends javax.swing.JFrame implements Runnable {
 
 	/*
 	 * GLOBALS
@@ -41,16 +41,17 @@ public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 	/*
 	 * CONSTRUCTOR
 	 */
-	public ConnectorGUI() {
+	public ControlPanelGui() {
 		// Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		initComponents();
 		createObjects();
 		setResizable(false);
 		communicator.searchForPorts();
-		setAlwaysOnTop(true);
-		addWindowListener(new java.awt.event.WindowAdapter() {
+		// setAlwaysOnTop(true);
+		this.addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override
 			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+				communicator.setReadingFlag(false);
 				if (communicator.getConnected())
 					communicator.disconnect();
 				System.exit(0);
@@ -102,11 +103,11 @@ public class ConnectorGUI extends javax.swing.JFrame implements Runnable {
 		controlPanelLabel = new javax.swing.JLabel();
 
 		sensorNumberLabel = new javax.swing.JLabel();
-	
+
 		btnShowSensorSelectorPane = new javax.swing.JButton();
 		btnDebug = new javax.swing.JButton();
 		btnShowVisualGui = new javax.swing.JButton();
-btnShowDataGui = new javax.swing.JButton();
+		btnShowDataGui = new javax.swing.JButton();
 		cboxPorts = new javax.swing.JComboBox();
 		comPortSelectLabel = new javax.swing.JLabel();
 		btnConnect = new javax.swing.JButton();
@@ -200,82 +201,65 @@ btnShowDataGui = new javax.swing.JButton();
 		getContentPane().setLayout(layout);
 		layout.setHorizontalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(layout
 				.createSequentialGroup().addContainerGap()
-				.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(controlPanelLabel)
-						.addGroup(layout.createSequentialGroup()
-								.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-										.addGroup(layout.createSequentialGroup()
-												.addComponent(cboxPorts, javax.swing.GroupLayout.PREFERRED_SIZE, 69,
-														javax.swing.GroupLayout.PREFERRED_SIZE)
+				.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+						.addComponent(controlPanelLabel)
+						.addGroup(layout.createSequentialGroup().addGroup(layout
+								.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+								.addGroup(layout.createSequentialGroup().addComponent(cboxPorts,
+										javax.swing.GroupLayout.PREFERRED_SIZE, 69,
+										javax.swing.GroupLayout.PREFERRED_SIZE)
+										.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+										.addComponent(btnConnect)
+										.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+										.addComponent(btnDisconnect))
+								.addComponent(comPortSelectLabel)
+								// .addComponent(jLabel2)
+								.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+										.addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout
+												.createSequentialGroup()
+												// .addComponent(jLabel3,
+												// javax.swing.GroupLayout.PREFERRED_SIZE,
+												// 37,
+												// javax.swing.GroupLayout.PREFERRED_SIZE)
+												.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+												.addComponent(sensorNumberLabel, javax.swing.GroupLayout.DEFAULT_SIZE,
+														javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+										.addGroup(javax.swing.GroupLayout.Alignment.LEADING,
+												layout.createSequentialGroup().addGroup(layout
+														.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+														.addComponent(btnDebug)
+														.addGroup(layout.createParallelGroup(
+																javax.swing.GroupLayout.Alignment.TRAILING, false)
+																// .addComponent(jLabels4a,
+																// javax.swing.GroupLayout.Alignment.LEADING,
+																// javax.swing.GroupLayout.DEFAULT_SIZE,
+																// javax.swing.GroupLayout.DEFAULT_SIZE,
+																// Short.MAX_VALUE)
+																.addComponent(btnShowSensorSelectorPane,
+																		javax.swing.GroupLayout.Alignment.LEADING)))
 												.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-												.addComponent(btnConnect)
-												.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-												.addComponent(btnDisconnect))
-										.addComponent(comPortSelectLabel)
-//										.addComponent(jLabel2)
-										.addGroup(layout
-												.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-												.addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout
-														.createSequentialGroup()
-//														.addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE,
-//																37, javax.swing.GroupLayout.PREFERRED_SIZE)
-														.addPreferredGap(
-																javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-														.addComponent(sensorNumberLabel,
-																javax.swing.GroupLayout.DEFAULT_SIZE,
-																javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-												.addGroup(javax.swing.GroupLayout.Alignment.LEADING,
-														layout.createSequentialGroup().addGroup(layout
-																.createParallelGroup(
-																		javax.swing.GroupLayout.Alignment.LEADING)
-																.addComponent(btnDebug)
-																.addGroup(layout
-																		.createParallelGroup(
-																				javax.swing.GroupLayout.Alignment.TRAILING,
-																				false)
-//																		.addComponent(jLabels4a,
-//																				javax.swing.GroupLayout.Alignment.LEADING,
-//																				javax.swing.GroupLayout.DEFAULT_SIZE,
-//																				javax.swing.GroupLayout.DEFAULT_SIZE,
-//																				Short.MAX_VALUE)
-																		.addComponent(btnShowSensorSelectorPane,
-																				javax.swing.GroupLayout.Alignment.LEADING)))
-														.addPreferredGap(
-																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-														.addGroup(layout
-																.createParallelGroup(
-																		javax.swing.GroupLayout.Alignment.LEADING)
-																.addComponent(btnShowDataGui)
-																.addGroup(layout
-																		.createParallelGroup(
-																				javax.swing.GroupLayout.Alignment.TRAILING,
-																				false)
-//																		.addComponent(jLabels4b,
-//																				javax.swing.GroupLayout.Alignment.LEADING,
-//																				javax.swing.GroupLayout.DEFAULT_SIZE,
-//																				javax.swing.GroupLayout.DEFAULT_SIZE,
-//																				Short.MAX_VALUE)
-																		.addComponent(btnShowVisualGui,
-																				javax.swing.GroupLayout.Alignment.LEADING)))))
-//										.addComponent(jLabel6)
-										.addGroup(
-												layout.createSequentialGroup()
-														.addGroup(layout
-																.createParallelGroup(
-																		javax.swing.GroupLayout.Alignment.LEADING)
-//																.addComponent(jLabels1b).addComponent(jLabels1a)
-																)
-														.addPreferredGap(
-																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 												.addGroup(layout
 														.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-//														.addComponent(jLabels2b).addComponent(jLabels2a)
-														)
-												.addGap(3, 3, 3)
-												.addGroup(layout
-														.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-//														.addComponent(jLabels3a).addComponent(jLabels3b)
-														)))
-								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+														.addComponent(btnShowDataGui)
+														.addGroup(layout.createParallelGroup(
+																javax.swing.GroupLayout.Alignment.TRAILING, false)
+																// .addComponent(jLabels4b,
+																// javax.swing.GroupLayout.Alignment.LEADING,
+																// javax.swing.GroupLayout.DEFAULT_SIZE,
+																// javax.swing.GroupLayout.DEFAULT_SIZE,
+																// Short.MAX_VALUE)
+																.addComponent(btnShowVisualGui,
+																		javax.swing.GroupLayout.Alignment.LEADING)))))
+								// .addComponent(jLabel6)
+								.addGroup(layout.createSequentialGroup()
+										.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+		// .addComponent(jLabels1b).addComponent(jLabels1a)
+		).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+										.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+		// .addComponent(jLabels2b).addComponent(jLabels2a)
+		).addGap(3, 3, 3).addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+		// .addComponent(jLabels3a).addComponent(jLabels3b)
+		))).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 								.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
 										.addComponent(logNameLabel).addComponent(jScrollPane2,
 												javax.swing.GroupLayout.PREFERRED_SIZE, 333,
@@ -295,10 +279,10 @@ btnShowDataGui = new javax.swing.JButton();
 										javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
 								.addComponent(btnConnect).addComponent(btnDisconnect))
 								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-//								.addComponent(jLabel2)
+								// .addComponent(jLabel2)
 								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 								.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-//										.addComponent(jLabel3)
+										// .addComponent(jLabel3)
 										.addComponent(sensorNumberLabel))
 								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 								.addGroup(
@@ -307,39 +291,34 @@ btnShowDataGui = new javax.swing.JButton();
 														.addComponent(btnShowSensorSelectorPane)
 														.addPreferredGap(
 																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-//												.addComponent(jLabels4a)
+												// .addComponent(jLabels4a)
 												.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-												.addComponent(btnDebug)).addGroup(
-														layout.createSequentialGroup().addComponent(btnShowVisualGui)
-																.addPreferredGap(
-																		javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-//																.addComponent(jLabels4b)
-																.addPreferredGap(
-																		javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																.addComponent(btnShowDataGui)))
+												.addComponent(btnDebug))
+										.addGroup(
+												layout.createSequentialGroup().addComponent(btnShowVisualGui)
+														.addPreferredGap(
+																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+														// .addComponent(jLabels4b)
+														.addPreferredGap(
+																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+														.addComponent(btnShowDataGui)))
 								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-//								.addComponent(jLabel6)
-								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addGroup(
-										layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-												.addGroup(layout.createSequentialGroup()
-//														.addComponent(jLabels3b)
-														.addPreferredGap(
-																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-//														.addComponent(jLabels3a)
-														)
-												.addGroup(layout.createSequentialGroup()
-//														.addComponent(jLabels1a)
-														.addPreferredGap(
-																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-//														.addComponent(jLabels1b)
-														)
-												.addGroup(layout.createSequentialGroup()
-//														.addComponent(jLabels2a)
-														.addPreferredGap(
-																javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-//														.addComponent(jLabels2b)
-														))))
-				.addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)));
+								// .addComponent(jLabel6)
+								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+								.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+										.addGroup(layout.createSequentialGroup()
+												// .addComponent(jLabels3b)
+												.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+		// .addComponent(jLabels3a)
+		).addGroup(layout.createSequentialGroup()
+				// .addComponent(jLabels1a)
+				.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+		// .addComponent(jLabels1b)
+		).addGroup(layout.createSequentialGroup()
+				// .addComponent(jLabels2a)
+				.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+		// .addComponent(jLabels2b)
+		)))).addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)));
 
 		pack();
 	}// </editor-fold>//GEN-END:initComponents
@@ -353,8 +332,11 @@ btnShowDataGui = new javax.swing.JButton();
 	}
 
 	private void performDebugBtn(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnLeftDecelActionPerformed
-		System.out.println("Sensor selector visible: " + sensorSelector.isVisible() + "\ndatagui visibile: "
-				+ datagui.isVisible() + "\nVisual gui visible: " + visualgui.isVisible());
+		System.out.println("Halt: " + communicator.halt + "\nisasleep: " + communicator.isAsleep);
+		// System.out.println("Sensor selector visible: " +
+		// sensorSelector.isVisible() + "\ndatagui visibile: "
+		// + datagui.isVisible() + "\nVisual gui visible: " +
+		// visualgui.isVisible());
 	}// GEN-LAST:event_btnLeftDecelActionPerformed
 
 	private void performTogVisualGUI(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnRightAccelActionPerformed
@@ -379,17 +361,22 @@ btnShowDataGui = new javax.swing.JButton();
 			if (communicator.getConnected() == true) {
 				if (communicator.initIOStream() == true) {
 					communicator.setReadingFlag(true);
-					communicator.consumerThread.start();
-					guiUpdater.start();
+					synchronized (communicator.controller.consumerThread) {
+						communicator.controller.consumerThread.start();
+					}
+					synchronized (guiUpdater) {
+						guiUpdater.start();
+					}
+					synchronized (communicator.window.datagui.dataGuiUpdater) {
+						communicator.window.datagui.dataGuiUpdater.start();
+					}
 					communicator.initListener();
 				}
 			}
 		} else {
 			communicator.connect();
 			if (communicator.getConnected() == true) {
-
 				if (communicator.initIOStream() == true) {
-
 					communicator.initListener();
 					wake();
 				}
@@ -399,22 +386,26 @@ btnShowDataGui = new javax.swing.JButton();
 	}
 
 	protected void wake() {
-		synchronized (communicator.consumerThread) {
-			communicator.consumerThread.notify();
+		synchronized (communicator.controller.consumerThread) {
+			communicator.controller.consumerThread.notify();
 		}
 		synchronized (guiUpdater) {
 			guiUpdater.notify();
 		}
+		synchronized (communicator.window.datagui.dataGuiUpdater) {
+			communicator.window.datagui.dataGuiUpdater.notify();
+		}
 	}
 
 	private void btnDisconnectActionPerformed(java.awt.event.ActionEvent evt) throws InterruptedException {// GEN-FIRST:event_btnDisconnectActionPerformed
+		communicator.halt = true;
 		communicator.disconnect();
 		if (!communicator.isAsleep) {
 			String logText = "Hardware has gone to sleep.";
 			txtLog.setForeground(Color.BLACK);
 			txtLog.append(logText + "\n");
 		}
-		communicator.halt = true;
+
 	}
 
 	@Override
@@ -422,131 +413,78 @@ btnShowDataGui = new javax.swing.JButton();
 		// Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		while (communicator.isConsuming) {
 			// System.out.println("i'm cons in gui");
-			if (communicator.halt) // NOT DEBUG
+			if (communicator.halt) {// NOT DEBUG
+				System.out.println("Halt");
 				try {
 					synchronized (guiUpdater) {
 						guiUpdater.wait();
 					}
+					System.out.println("released guiUpdater");
+					synchronized (communicator.window.datagui.dataGuiUpdater) {
+						communicator.window.datagui.dataGuiUpdater.wait();
+					}
+					System.out.println("wake up");
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
-			if (!communicator.isAsleep) { // DEBUG
-
-				for (int i = 0; i < 4; i++) {
-					for (int j = 0; j < 2; j++) {
-						int tempInt = communicator.getCurrentSideSensor(i, j);
-						String tempString = new String();
-						if (tempInt < 10) {
-							tempString = "00";
-						} else if (tempInt < 100) {
-							tempString = "0";
-						}
-
-						SensorOutputDataGUI.sideSensor[i][j].setText(tempString + tempInt);
-					}
-				}
-
-				for (int i = 0; i < 10; i++) {
-					for (int j = 0; j < 16; j++) {
-						SensorOutputDataGUI.padCellData[i][j].setText("" + communicator.getCurrentXYZ(i, j));
-					}
-				}
-				// try {
-				// Thread.sleep(100);
-				// } catch (InterruptedException e) {
-				// e.printStackTrace();
-				// }
-
-				// NOT DEBUG
-				// s1
-				// jLabels1a.setText(Integer.toString(communicator.getCurrentSideSensor(0,
-				// 0)));
-				// jLabels1b.setText(Integer.toString(communicator.getCurrentSideSensor(0,
-				// 1)));
-				// // s2
-				// jLabels2a.setText(Integer.toString(communicator.getCurrentSideSensor(1,
-				// 0)));
-				// jLabels2b.setText(Integer.toString(communicator.getCurrentSideSensor(1,
-				// 1)));
-				// // s3
-				// jLabels3a.setText(Integer.toString(communicator.getCurrentSideSensor(2,
-				// 0)));
-				// jLabels3b.setText(Integer.toString(communicator.getCurrentSideSensor(2,
-				// 1)));
-				// // s4
-				// jLabels4a.setText(Integer.toString(communicator.getCurrentSideSensor(3,
-				// 0)));
-				// jLabels4b.setText(Integer.toString(communicator.getCurrentSideSensor(3,
-				// 1)));
-				// // XYZ
-				// if (communicator.inXYZ) { // if we're in the xyz
-				// for (int i = 0; i < communicator.modelState.ROWS; i++) {
-				// for (int j = 0; j < communicator.modelState.COLS; j++) {
-				// int temp = communicator.getCurrentXYZ(i, j);
-				// // if (temp != 0)
-				//
-				// }
-				// }
-				// }
-
-				// NOT DEBUG
-
-				// DEBUGGER ONLY I.E. TO SYSOUT
-
-				// for (int i = 0; i < communicator.activeSensors.size(); i++) {
-				// System.out.println(communicator.activeSensors.get(i).toString());
-				// }
-				// try {
-				// Thread.sleep(500);
-				// } catch (InterruptedException e) {
-				// // TODO Auto-generated catch block
-				// e.printStackTrace();
-				// }
-
-				// s1
-				// if (communicator.inSensorQuery(SensorState.IN_STRIP_1))
-				// System.out.println("s1: " +
-				// communicator.getCurrentSideSensor(0, 0) + " "
-				// + communicator.getCurrentSideSensor(0, 1));
-				// // s2
-				// if (communicator.inSensorQuery(SensorState.IN_STRIP_2))
-				// System.out.println(" s2: " +
-				// communicator.getCurrentSideSensor(1, 0) + " "
-				// + communicator.getCurrentSideSensor(1, 1));
-				// // s3
-				// if (communicator.inSensorQuery(SensorState.IN_STRIP_3))
-				// System.out.println(" s3: " +
-				// communicator.getCurrentSideSensor(2, 0) + " "
-				// + communicator.getCurrentSideSensor(2, 1));
-				// // s4
-				// if (communicator.inSensorQuery(SensorState.IN_STRIP_4))
-				// System.out.println(" s4: " +
-				// communicator.getCurrentSideSensor(3, 0) + " "
-				// + communicator.getCurrentSideSensor(3, 1));
-				// // XYZ
-				// if (communicator.inSensorQuery(SensorState.IN_XYZ)) { // if
-				// // we're
-				// // in
-				// // the
-				// // xyz
-				// for (int i = 0; i < Model.ROWS; i++) {
-				// for (int j = 0; j < Model.COLS; j++) {
-				// int temp = communicator.getCurrentXYZ(i, j);
-				// if (temp < 10) {
-				// System.out.print(" ");
-				// } else if (temp < 100) {
-				// System.out.print(" ");
-				// }
-				// System.out.print(temp + " ");
-				// }
-				// System.out.println();
-				// }
-				// }
-				// System.out.println();
-
-				// DEBUG end
-
 			}
 		}
 	}
+	// try {
+	// Thread.sleep(100);
+	// } catch (InterruptedException e) {
+	// e.printStackTrace();
+	// }
+	// DEBUGGER ONLY I.E. TO SYSOUT
+	// for (int i = 0; i < communicator.activeSensors.size(); i++) {
+	// System.out.println(communicator.activeSensors.get(i).toString());
+	// }
+	// try {
+	// Thread.sleep(500);
+	// } catch (InterruptedException e) {
+	// // TODO Auto-generated catch block
+	// e.printStackTrace();
+	// }
+	// s1
+	// if (communicator.inSensorQuery(SensorState.IN_STRIP_1))
+	// System.out.println("s1: " +
+	// communicator.getCurrentSideSensor(0, 0) + " "
+	// + communicator.getCurrentSideSensor(0, 1));
+	// // s2
+	// if (communicator.inSensorQuery(SensorState.IN_STRIP_2))
+	// System.out.println(" s2: " +
+	// communicator.getCurrentSideSensor(1, 0) + " "
+	// + communicator.getCurrentSideSensor(1, 1));
+	// // s3
+	// if (communicator.inSensorQuery(SensorState.IN_STRIP_3))
+	// System.out.println(" s3: " +
+	// communicator.getCurrentSideSensor(2, 0) + " "
+	// + communicator.getCurrentSideSensor(2, 1));
+	// // s4
+	// if (communicator.inSensorQuery(SensorState.IN_STRIP_4))
+	// System.out.println(" s4: " +
+	// communicator.getCurrentSideSensor(3, 0) + " "
+	// + communicator.getCurrentSideSensor(3, 1));
+	// // XYZ
+	// if (communicator.inSensorQuery(SensorState.IN_XYZ)) { // if
+	// // we're
+	// // in
+	// // the
+	// // xyz
+	// for (int i = 0; i < Model.ROWS; i++) {
+	// for (int j = 0; j < Model.COLS; j++) {
+	// int temp = communicator.getCurrentXYZ(i, j);
+	// if (temp < 10) {
+	// System.out.print(" ");
+	// } else if (temp < 100) {
+	// System.out.print(" ");
+	// }
+	// System.out.print(temp + " ");
+	// }
+	// System.out.println();
+	// }
+	// }
+	// System.out.println();
+	// DEBUG end
+
 }

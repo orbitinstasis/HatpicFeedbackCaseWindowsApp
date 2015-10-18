@@ -19,17 +19,17 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 	 */
 	protected static long lastHit;
 	JButton[] sensor = new JButton[5];
-	protected boolean sensorState[] = { false, false, false, false, false }; 
+	protected boolean sensorState[] = { false, false, false, false, false };
 	FlowLayout experimentLayout = new FlowLayout();
 	private SensorSelectorGUI sensorSelector;
 	// passed from main GUI
-	static ConnectorGUI window = null;
+	static ControlPanelGui window = null;
 	static Communicator communicator = null;
 
 	/*
 	 * CONSTRUCTOR
 	 */
-	public SensorSelectorGUI(ConnectorGUI window, Communicator communicator) {
+	public SensorSelectorGUI(ControlPanelGui window, Communicator communicator) {
 		super("Sensor Selector");
 		lastHit = System.currentTimeMillis();
 		SensorSelectorGUI.window = window;
@@ -73,7 +73,7 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 		JPanel controls = new JPanel();
 		controls.setLayout(new FlowLayout());
 		for (int i = 0; i < 5; i++) {
-			boolean isOn = ((communicator.getSensors() & (0b00000001 << i)) > 0);
+			boolean isOn = ((communicator.controller.sensors & (0b00000001 << i)) > 0);
 			sensorState[i] = isOn;
 			Font onFont = null;
 			Font offFont = null;
@@ -103,11 +103,14 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 			sensor[i].addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					long now = System.currentTimeMillis();
-					if ((now - lastHit) > (500)) {
-						communicator.changeSensorsOutsideSleepBySwitch(j);
-						changeButText(j);
-						window.datagui.toggleReadingFont(j, sensorState[j]);
-						window.sensorNumberLabel.setText("Sensors: " + Integer.toBinaryString(communicator.getSensors()));
+					if ((now - lastHit) > (100)) {
+						communicator.controller.changeSensorsOutsideSleepBySwitch(j);
+						synchronized (communicator.changingSensorLock) {
+							changeButText(j);
+							window.datagui.toggleReadingFont(j, sensorState[j]);
+							window.sensorNumberLabel
+									.setText("Sensors: " + Integer.toBinaryString(communicator.controller.sensors));
+						}
 						lastHit = System.currentTimeMillis();
 					}
 				}
