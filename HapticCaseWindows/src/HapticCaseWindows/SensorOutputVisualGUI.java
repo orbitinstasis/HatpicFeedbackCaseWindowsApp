@@ -20,6 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package HapticCaseWindows;
 
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 
 import javax.swing.UIManager;
@@ -49,6 +51,11 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
     public SensorOutputVisualGUI(ControlPanelGui window) {
     	this.window = window;
         initComponents();
+        
+		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+		int y = 2;
+		this.setLocation(dim.width/y+this.getSize().width/y, dim.height/3+this.getSize().height/3);
+        
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(java.awt.event.WindowEvent windowEvent) {

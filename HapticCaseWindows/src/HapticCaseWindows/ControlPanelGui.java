@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 package HapticCaseWindows;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 
 import javax.swing.text.DefaultCaret;
 
@@ -75,6 +77,10 @@ public class ControlPanelGui extends javax.swing.JFrame implements Runnable {
 		});
 		toggleAllControls();
 		pack();
+		int x = 3;
+		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+		this.setLocation(dim.width/2-this.getSize().width/2, dim.height/x-this.getSize().height/2);
+		setVisible(true);
 		sensorSelector.mainSensorSelectorGui(sensorSelector);
 		datagui.numericGUImain(datagui);
 		visualgui.visualGUImain(visualgui);
