@@ -28,8 +28,6 @@ package HapticCaseWindows;
  *each data/visualgui needs its own runner.
  *
  *FIX THREAD HANDLING - THEY'RE NOT WAITING AS INTENDED
- *
- *For the canvas blocks, the main canvas for the xyz has been sized so THE X,Y SIZE of each xyz block is 25x25
  */
 
 import java.awt.Color;

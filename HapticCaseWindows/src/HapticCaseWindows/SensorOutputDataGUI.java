@@ -20,10 +20,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package HapticCaseWindows;
 
+import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
+import java.util.Random;
 
 import javax.swing.JLabel;
 import javax.swing.UIManager;
@@ -71,13 +74,55 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 		});
 	}
 
-	/**
+	/*
 	 * **************************************************************** RUNNER 
 	 */
 	@Override
 	public void run() {
 		while (window.communicator.isConsuming) {
 			if (!window.communicator.isAsleep) {
+
+				/*
+				 * for each side strip sensor
+				 */
+                for (int i = 0; i < 4; i++) {
+                    int force = window.communicator.controller.modelState.getCurrentSideSensor(i, 0);
+                    if (force != window.communicator.controller.modelState.getOldSideSensor(i)) { // if we're only dealing with changing cells
+                        int position = (int) map(window.communicator.controller.modelState.getCurrentSideSensor(i, 1), 0, 254, 0, window.visualgui.canvas[i].getHeight());
+        				window.visualgui.g2d[i].setColor(Color.BLACK);
+        				window.visualgui.g2d[i].fillRect(0, 0, window.visualgui.canvas[0].getWidth(), window.visualgui.canvas[0].getHeight());
+                        window.visualgui.g2d[i].setColor(Color.WHITE);
+                        window.visualgui.g2d[i].setComposite(AlphaComposite.getInstance(AlphaComposite.SRC,((map(force, 0, 160, 0, 1))) ));
+                        window.communicator.controller.modelState.setOldSideSensor(i,  window.communicator.controller.modelState.getCurrentSideSensor(i, 0));
+                        if (force > 0) {
+                        	int temp = (int)(map(force, 0, 60, 10, 38));
+                        	window.visualgui.g2d[i].fillOval((window.visualgui.canvas[0].getWidth()/2 - temp/2), (position-19), temp, temp);
+                        }
+                    }
+                }
+				
+                /*
+                 * do XYZ here
+                 */
+                for (int i = 0; i < 10; i++) {
+                    for (int j = 0; j < 16; j++) {
+                    	int force = window.communicator.controller.modelState.getCurrentXYZ(i, j);
+                        if (force != window.communicator.controller.modelState.getOldXYZ(i, j)) {
+                        	int RECT_SIZE = 25;
+            				window.visualgui.g2d[4].setColor(Color.BLACK);
+            				window.visualgui.g2d[4].fillRect((RECT_SIZE*i),(j*RECT_SIZE),(RECT_SIZE),(RECT_SIZE));
+                            window.communicator.controller.modelState.setOldXYZ(i, j, window.communicator.controller.modelState.getCurrentXYZ(i, j));
+                        	if (force > 0) {
+                                window.visualgui.g2d[4].setColor(Color.WHITE);
+                                window.visualgui.g2d[4].setComposite(AlphaComposite.getInstance(AlphaComposite.SRC,((map(force, 0, 160, 0, 1))) ));
+                        		window.visualgui.g2d[4].fillRect((i * RECT_SIZE), (j * RECT_SIZE), (RECT_SIZE), (RECT_SIZE));
+                        	}
+                        }
+                    }
+                }
+				
+				
+				
 				for (int i = 0; i < 4; i++) {
 					for (int j = 0; j < 2; j++) {
 						int tempInt = window.communicator.controller.modelState.getCurrentSideSensor(i, j);
@@ -103,9 +148,24 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 	/*
 	 * ************************************************************************************** METHODS 
 	 */
+	/**
+	 * Maps x linearly to new scale 
+	 * 
+	 * @param x
+	 * @param in_min
+	 * @param in_max
+	 * @param out_min
+	 * @param out_max
+	 * @return mapped value 
+	 */
+    protected float map(float x, float in_min, float in_max, float out_min, float out_max)
+    {
+        if (x > in_max) x = in_max;
+        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    }
 	
 	/**
-	 * changes jlabels font and text depending on sensor state 
+	 * changes JLabels font and text depending on sensor state 
 	 * 
 	 * @param sensor number 
 	 * @param isOn

@@ -145,6 +145,11 @@ public class ControlPanelGui extends javax.swing.JFrame implements Runnable {
 	public void run() {
 		// Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		while (communicator.isConsuming) {
+			
+			
+			
+			
+			
 			// System.out.println("i'm cons in gui");
 			if (communicator.halt) {// NOT DEBUG
 				System.out.println("Halt");
@@ -327,6 +332,9 @@ public class ControlPanelGui extends javax.swing.JFrame implements Runnable {
 	 * @throws InterruptedException
 	 */
 	private void btnDisconnectActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnDisconnectActionPerformed
+		for (int i = 0; i < 5; i++ ) { 
+			visualgui.cleanCanvas(i);
+		}
 		communicator.halt = true;
 		communicator.disconnect();
 		if (!communicator.isAsleep) {

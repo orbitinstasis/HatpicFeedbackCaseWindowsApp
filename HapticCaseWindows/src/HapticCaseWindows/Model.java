@@ -31,21 +31,21 @@ public class Model {
 	 */
 	protected static final int ROWS = 10;
 	protected static final int COLS = 16;
-	protected static final int SIDE_SENSORS = 4;
-	protected static final int SIDE_PARAMETERS = 2;
+	private static final int SIDE_SENSORS = 4;
+	private static final int SIDE_PARAMETERS = 2;
 	protected final static int SIDE_STRIP_FORCE = 0;
 	protected final static int SIDE_STRIP_POSITION = 1;
 	
 	/*
 	 **************************************************************  GLOBALS
 	 */
-	Object modelLock = new Object();
-	String sensorStateFilename = new String("sensorState.txt");
-	File sensorStateFile = new File(sensorStateFilename);
-	String dataFilename = new String("sensorData.txt");
-	File dataFile = new File(dataFilename);
-	FileWriter fw = null;
-	private static int oldSideSensor[][] = { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } };
+	private Object modelLock = new Object();
+	private String sensorStateFilename = new String("sensorState.txt");
+	private File sensorStateFile = new File(sensorStateFilename);
+	private String dataFilename = new String("sensorData.txt");
+	private File dataFile = new File(dataFilename);
+	private FileWriter fw = null;
+	private static int oldSideSensor[] = { 0,0,0,0};
 	private static int currentSideSensor[][] = { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } };
 	protected boolean sensorState[] = { false, false, false, false, false };
 	private static int[][] padCell = new int[ROWS][COLS];
@@ -72,23 +72,54 @@ public class Model {
 	/**
 	 * gets current rear pad state at coordinate (i,j)
 	 * 
-	 * @param i ROW
-	 * @param j COL 
+	 * @param row ROW
+	 * @param col COL 
 	 * @return requested pad values current state 
 	 */
-	public int getCurrentXYZ(int i, int j) {
-		return Model.padCell[i][j];
+	public int getCurrentXYZ(int row, int col) {
+		return Model.padCell[row][col];
+	}
+	
+	/**
+	 * gets OLD rear pad state at coordinate (row,col)
+	 * 
+	 * @param row ROW
+	 * @param col COL 
+	 * @return requested pad values current state 
+	 */
+	public int getOldXYZ(int row, int col) {
+		return Model.oldPadCell[row][col];
 	}
 
 	/**
 	 * gets current side sensor parameter
 	 * 
-	 * @param i sensor number
-	 * @param j sensor parameter 
+	 * @param sensor
+	 * @param parameter sensor parameter 
 	 * @return requested side sensor current state
 	 */
-	public int getCurrentSideSensor(int i, int j) {
-		return Model.currentSideSensor[i][j];
+	public int getCurrentSideSensor(int sensor, int parameter) {
+		return Model.currentSideSensor[sensor][parameter];
+	}
+	
+	/**
+	 * gets old side sensor FORCE parameter
+	 * 
+	 * @param sensor
+	 * @return requested side sensor old force value
+	 */
+	public int getOldSideSensor(int sensor) {
+		return Model.oldSideSensor[sensor];
+	}
+	
+	/**
+	 * sets old side sensor FORCE parameter
+	 * 
+	 * @param sensor
+	 * @return requested side sensor old force value
+	 */
+	public void setOldSideSensor(int sensor, int value) {
+		 Model.oldSideSensor[sensor] = value;
 	}
 	
 	/**
@@ -100,14 +131,25 @@ public class Model {
 	 */
 	public void setCurrentSideSensor(int stripNumber, int sensorAttribute, Integer value) {
 		synchronized (modelLock) {
-			Model.oldSideSensor[stripNumber][sensorAttribute] = Model.currentSideSensor[stripNumber][sensorAttribute];
 			Model.currentSideSensor[stripNumber][sensorAttribute] = value;
 		}
 	}
 
 	/**
-	 * sets rear pad value after saving existing rear pad model to oldPadCell
-	 * this can be useful to know if a sensor cell has changed since the previous reading 
+	 * sets OLD rear pad value
+	 * 
+	 * @param row
+	 * @param col
+	 * @param value
+	 */
+	public void setOldXYZ(int row, int col, int value) {
+		synchronized (modelLock) {
+			Model.oldPadCell[row][col] = value;
+		}
+	}
+	
+	/**
+	 * sets rear pad value
 	 * 
 	 * @param row
 	 * @param col
@@ -115,7 +157,6 @@ public class Model {
 	 */
 	public void setCurrentXYZ(int row, int col, int value) {
 		synchronized (modelLock) {
-			Model.oldPadCell[row][col] = Model.padCell[row][col];
 			Model.padCell[row][col] = value;
 		}
 	}
@@ -184,8 +225,9 @@ public class Model {
 				}
 			}
 		}
-		Model.oldSideSensor = Model.currentSideSensor;
+		
 		for (int i = 0; i < 4; i++) {
+			Model.oldSideSensor[i] = 0;
 			for (int j = 0; j < 2; j++) {
 				synchronized (modelLock) {
 					currentSideSensor[i][j] = 0;

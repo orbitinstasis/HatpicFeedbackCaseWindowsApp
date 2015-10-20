@@ -20,30 +20,44 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package HapticCaseWindows;
 
+import java.awt.AlphaComposite;
+import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 
+import javax.swing.GroupLayout;
+import javax.swing.JPanel;
 import javax.swing.UIManager;
 
+/*
+ * 
+ * the radius of the circle is going to be 19 px.
+ *  
+ * For the canvas blocks, the main canvas for the xyz has been sized so THE X,Y SIZE of each xyz block is 25x25
+ */
 @SuppressWarnings("serial")
 public class SensorOutputVisualGUI extends javax.swing.JFrame {
 
 	/*
 	 * ************************************************************** GLOBAL
-	 */
-    private java.awt.Canvas rearXYZCanvas;
-    private javax.swing.JPanel rearXYZPanel;
-    private java.awt.Canvas side1Canvas;
-    private java.awt.Canvas side2Canvas;
-    private java.awt.Canvas side3Canvas;
-    private java.awt.Canvas side4Canvas;
-    private javax.swing.JPanel sideSensor1Panel;
-    private javax.swing.JPanel sideSensor2Panel;
-    private javax.swing.JPanel sideSensor3Panel;
-    private javax.swing.JPanel sideSensor4Panel;  
+	 */   
+	protected JPanel[] panel = new JPanel[5];
+	protected Canvas[] canvas = new Canvas[5];
+    private GroupLayout[] grouplayout = new GroupLayout[5];
+    protected Graphics gc[] = new Graphics[5]; // this gc is used for each canvas
     ControlPanelGui window = null;
     SensorOutputVisualGUI visualgui = null;
+    Graphics2D[] g2d =  new Graphics2D[5];
+	/*
+	 * ************************************************************** CONSTANTS
+	 */
+    protected static Color stripColor = Color.decode("#d35400");
+    protected static Color xyzColor = Color.decode("#c0392b");
+    
     /**
      * ************************************************************* CONSRTUCTOR
      * @param window 
@@ -51,6 +65,24 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
     public SensorOutputVisualGUI(ControlPanelGui window) {
     	this.window = window;
         initComponents();
+
+        
+        
+        for (int i = 0; i < 5; i++) {
+        	canvas[i].setBackground(Color.BLACK);
+        	canvas[i].setForeground(Color.BLACK);
+        	gc[i] = canvas[i].getGraphics();
+        	g2d[i] = (Graphics2D)gc[i];
+        	
+
+
+//        	if (i < 4)
+//        		gc[i].setColor(new Color(211,84,0,(25 + 25*i)));
+//        	else 
+//        		gc[i].setColor(xyzColor);
+        }
+        
+//        System.out.println("window.visualgui.panel[3].getHeight());
         
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		int y = 2;
@@ -65,7 +97,22 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
 			}
 		});
     }
-              
+       
+	/*
+	 * ********************************************************************************** METHODs 
+	 */  
+    
+    protected void cleanCanvas(int id) {
+    	gc[id].setColor(Color.BLACK);
+    	if (id < 4) {
+    		gc[id].fillRect(0, 0, canvas[id].getWidth(), canvas[id].getHeight());
+    		gc[id].setColor(Color.decode("#d35400"));
+    	} else {
+    		gc[id].fillRect(0, 0, canvas[id].getWidth(),canvas[id].getHeight());
+    		gc[id].setColor(Color.decode("#c0392b"));
+    	}
+    }
+    
 	/*
 	 * **********************************************************************************MAIN METHOD 
 	 */                   
@@ -95,101 +142,48 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
 		/*
 		 * *********************************************BUTTON/LABEL INSTANTIATION**************************************
 		 */
-        sideSensor2Panel = new javax.swing.JPanel();
-        side2Canvas = new java.awt.Canvas();
-        sideSensor3Panel = new javax.swing.JPanel();
-        side3Canvas = new java.awt.Canvas();
-        sideSensor1Panel = new javax.swing.JPanel();
-        side1Canvas = new java.awt.Canvas();
-        sideSensor4Panel = new javax.swing.JPanel();
-        side4Canvas = new java.awt.Canvas();
-        rearXYZPanel = new javax.swing.JPanel();
-        rearXYZCanvas = new java.awt.Canvas();
-
         setTitle("Sensor Data Visual Display");
         setBackground(new java.awt.Color(255, 255, 255));
         setForeground(java.awt.Color.white);
         setResizable(false);
+    	
+        for (int i = 0; i < 5; i++) {
+        	panel[i] = new JPanel();
+        	canvas[i] = new Canvas();
+        	canvas[i].setBackground(new java.awt.Color(255, 255, 255));
+        	grouplayout[i] = new GroupLayout(panel[i]);
+        }
 
 		/*
 		 ****************************************************** JFrame components Layout **********************
 		 */
-        
-        sideSensor2Panel.setBackground(new java.awt.Color(255, 255, 255));
-        sideSensor2Panel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Side 2", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 10))); // NOI18N
-        sideSensor2Panel.setForeground(new java.awt.Color(255, 255, 255));
-        sideSensor2Panel.setPreferredSize(new java.awt.Dimension(50, 200));
+        for (int i = 0; i < 4; i++) { // layout the side sensors 
+            panel[i].setBackground(new java.awt.Color(255, 255, 255));
+            panel[i].setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Side " + (i+1), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 10))); // NOI18N
+            panel[i].setPreferredSize(new java.awt.Dimension(50, 200));
+            panel[i].setLayout(grouplayout[i]);
+            grouplayout[i].setHorizontalGroup(
+            		grouplayout[i] .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(canvas[i], javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            );
+            grouplayout[i].setVerticalGroup(
+            		grouplayout[i].createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(canvas[i], javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            );
+        }
 
-        javax.swing.GroupLayout sideSensor2PanelLayout = new javax.swing.GroupLayout(sideSensor2Panel);
-        sideSensor2Panel.setLayout(sideSensor2PanelLayout);
-        sideSensor2PanelLayout.setHorizontalGroup(
-            sideSensor2PanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(side2Canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        //xyz***************************************************
+        panel[4].setBackground(new java.awt.Color(255, 255, 255));
+        panel[4].setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Rear XYZ Pad", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 10))); // NOI18N
+        canvas[4].setPreferredSize(new java.awt.Dimension(250, 400));
+        panel[4].setLayout(grouplayout[4]);
+        grouplayout[4].setHorizontalGroup(
+            grouplayout[4].createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(canvas[4], javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-        sideSensor2PanelLayout.setVerticalGroup(
-            sideSensor2PanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(side2Canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-
-        sideSensor3Panel.setBackground(new java.awt.Color(255, 255, 255));
-        sideSensor3Panel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Side 3", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 10))); // NOI18N
-        sideSensor3Panel.setPreferredSize(new java.awt.Dimension(50, 200));
-
-        javax.swing.GroupLayout sideSensor3PanelLayout = new javax.swing.GroupLayout(sideSensor3Panel);
-        sideSensor3Panel.setLayout(sideSensor3PanelLayout);
-        sideSensor3PanelLayout.setHorizontalGroup(
-            sideSensor3PanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(side3Canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        sideSensor3PanelLayout.setVerticalGroup(
-            sideSensor3PanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(side3Canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-
-        sideSensor1Panel.setBackground(new java.awt.Color(255, 255, 255));
-        sideSensor1Panel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Side 1", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 10))); // NOI18N
-        sideSensor1Panel.setPreferredSize(new java.awt.Dimension(50, 200));
-
-        javax.swing.GroupLayout sideSensor1PanelLayout = new javax.swing.GroupLayout(sideSensor1Panel);
-        sideSensor1Panel.setLayout(sideSensor1PanelLayout);
-        sideSensor1PanelLayout.setHorizontalGroup(
-            sideSensor1PanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(side1Canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        sideSensor1PanelLayout.setVerticalGroup(
-            sideSensor1PanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(side1Canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-
-        sideSensor4Panel.setBackground(new java.awt.Color(255, 255, 255));
-        sideSensor4Panel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Side 4", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 10))); // NOI18N
-        sideSensor4Panel.setPreferredSize(new java.awt.Dimension(50, 200));
-
-        javax.swing.GroupLayout sideSensor4PanelLayout = new javax.swing.GroupLayout(sideSensor4Panel);
-        sideSensor4Panel.setLayout(sideSensor4PanelLayout);
-        sideSensor4PanelLayout.setHorizontalGroup(
-            sideSensor4PanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(side4Canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        sideSensor4PanelLayout.setVerticalGroup(
-            sideSensor4PanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(side4Canvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-
-        rearXYZPanel.setBackground(new java.awt.Color(255, 255, 255));
-        rearXYZPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Rear XYZ Pad", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 10))); // NOI18N
-
-        rearXYZCanvas.setPreferredSize(new java.awt.Dimension(250, 400));
-
-        javax.swing.GroupLayout rearXYZPanelLayout = new javax.swing.GroupLayout(rearXYZPanel);
-        rearXYZPanel.setLayout(rearXYZPanelLayout);
-        rearXYZPanelLayout.setHorizontalGroup(
-            rearXYZPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(rearXYZCanvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        rearXYZPanelLayout.setVerticalGroup(
-            rearXYZPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(rearXYZCanvas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        grouplayout[4].setVerticalGroup(
+            grouplayout[4].createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(canvas[4], javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -198,27 +192,27 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(sideSensor3Panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sideSensor4Panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(panel[2], javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(panel[3], javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(rearXYZPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(panel[4], javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(sideSensor1Panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sideSensor2Panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(panel[0], javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(panel[1], javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(sideSensor4Panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sideSensor1Panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(panel[3], javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(panel[0], javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(0, 0, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(sideSensor3Panel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sideSensor2Panel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-            .addComponent(rearXYZPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(panel[2], javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(panel[1], javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addComponent(panel[4], javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         pack();
-    }    
+    }
 }

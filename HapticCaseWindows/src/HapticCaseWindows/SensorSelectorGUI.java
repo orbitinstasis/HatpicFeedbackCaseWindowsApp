@@ -115,6 +115,7 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 	public void changeButText(int id) {
 		String temp;
 		Font onFont = null;
+		window.visualgui.cleanCanvas(id);
 		if (id == 4)
 			temp = "XYZ: ";
 		else
@@ -182,6 +183,7 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 					long now = System.currentTimeMillis();
 					if ((now - lastHit) > (SENSOR_CHANGE_LOCKOUT_TIME)) {
 						communicator.controller.changeSensorsOutsideSleepBySwitch(j);
+						try {Thread.sleep(100);} catch (InterruptedException e1) {e1.printStackTrace();} // debug trick to try and remove the -00.1 weird reading from gui
 						synchronized (communicator.changingSensorLock) {
 							changeButText(j);
 							window.datagui.toggleReadingFont(j, communicator.controller.modelState.sensorState[j]);
