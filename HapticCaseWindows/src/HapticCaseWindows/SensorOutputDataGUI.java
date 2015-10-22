@@ -20,13 +20,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package HapticCaseWindows;
 
-import java.awt.AlphaComposite;
-import java.awt.Color;
+import java.awt.AWTException;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
-import java.util.Random;
 
 import javax.swing.JLabel;
 import javax.swing.UIManager;
@@ -36,6 +35,11 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 	/*
 	 * ******************************************************************************GLOBALS
 	 */
+	boolean isFirstReading = true;
+	/*
+	 * we may want to move this robot to the controller 
+	 */
+	Robot robot = null;
 	// JLabels
 	static protected JLabel[][] sideSensor;
 	protected JLabel[] forceLabel;
@@ -58,6 +62,12 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 	 * @param ControlPanelGui
 	 */
 	public SensorOutputDataGUI(ControlPanelGui window) {
+		try {
+			robot = new Robot();
+		} catch (AWTException e) {
+			System.out.println("couldn't make a new robot");
+			e.printStackTrace();
+		}
 		this.window = window;
 		initComponents();
 		
@@ -81,66 +91,60 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 	public void run() {
 		while (window.communicator.isConsuming) {
 			if (!window.communicator.isAsleep) {
+				
+	/*
+	 * we want to add a tolerance for the position value so it doesn't pick up noise			
+	 */
+if (window.communicator.controller.modelState.getOldSideSensor(0, 0) != window.communicator.controller.modelState.getCurrentSideSensor(0, 0)) {
 
-				/*
-				 * for each side strip sensor
-				 */
-                for (int i = 0; i < 4; i++) {
-                    int force = window.communicator.controller.modelState.getCurrentSideSensor(i, 0);
-                    if (force != window.communicator.controller.modelState.getOldSideSensor(i)) { // if we're only dealing with changing cells
-                        int position = (int) map(window.communicator.controller.modelState.getCurrentSideSensor(i, 1), 0, 254, 0, window.visualgui.canvas[i].getHeight());
-        				window.visualgui.g2d[i].setColor(Color.BLACK);
-        				window.visualgui.g2d[i].fillRect(0, 0, window.visualgui.canvas[0].getWidth(), window.visualgui.canvas[0].getHeight());
-                        window.visualgui.g2d[i].setColor(Color.WHITE);
-                        window.visualgui.g2d[i].setComposite(AlphaComposite.getInstance(AlphaComposite.SRC,((map(force, 0, 160, 0, 1))) ));
-                        window.communicator.controller.modelState.setOldSideSensor(i,  window.communicator.controller.modelState.getCurrentSideSensor(i, 0));
-                        if (force > 0) {
-                        	int temp = (int)(map(force, 0, 60, 10, 38));
-                        	window.visualgui.g2d[i].fillOval((window.visualgui.canvas[0].getWidth()/2 - temp/2), (position-19), temp, temp);
-                        }
-                    }
-                }
-				
-                /*
-                 * do XYZ here
-                 */
-                for (int i = 0; i < 10; i++) {
-                    for (int j = 0; j < 16; j++) {
-                    	int force = window.communicator.controller.modelState.getCurrentXYZ(i, j);
-                        if (force != window.communicator.controller.modelState.getOldXYZ(i, j)) {
-                        	int RECT_SIZE = 25;
-            				window.visualgui.g2d[4].setColor(Color.BLACK);
-            				window.visualgui.g2d[4].fillRect((RECT_SIZE*i),(j*RECT_SIZE),(RECT_SIZE),(RECT_SIZE));
-                            window.communicator.controller.modelState.setOldXYZ(i, j, window.communicator.controller.modelState.getCurrentXYZ(i, j));
-                        	if (force > 0) {
-                                window.visualgui.g2d[4].setColor(Color.WHITE);
-                                window.visualgui.g2d[4].setComposite(AlphaComposite.getInstance(AlphaComposite.SRC,((map(force, 0, 160, 0, 1))) ));
-                        		window.visualgui.g2d[4].fillRect((i * RECT_SIZE), (j * RECT_SIZE), (RECT_SIZE), (RECT_SIZE));
-                        	}
-                        }
-                    }
-                }
+	int speed = 0;
+	 if (isFirstReading) { //avoid bogus reading from an invalid position reading
+         isFirstReading = false;
+     } else {
+         if (Math.abs(window.communicator.controller.modelState.getOldSideSensor(0, 1) - window.communicator.controller.modelState.getCurrentSideSensor(0, 1)) > 0) {
+             speed = ((int) window.communicator.controller.map(window.communicator.controller.modelState.getCurrentSideSensor(0, 0), 0, 250, 0, 80)) * Math.abs(window.communicator.controller.modelState.getCurrentSideSensor(0, 1) - window.communicator.controller.modelState.getOldSideSensor(0, 1)); // multiplier is force multiplied by difference of strp position
+             if (window.communicator.controller.modelState.getCurrentSideSensor(0, 1) >= window.communicator.controller.modelState.getOldSideSensor(0, 1))  //moving down
+                 speed *= -1;
+             /*
+              * next two lines should be removed, we want to adjust value of scroll depending on the linear mapping a few lines up where we set Speed
+              */
+             int signum = Integer.signum(speed);
+             speed = signum *  (int) (window.communicator.controller.map(Math.abs(speed), 0, 30, 0, 5));
+             System.out.println("\nSpeed: " + speed);
+             robot.mouseWheel(speed); // do the scroll
+         }
+     }
+     if (window.communicator.controller.modelState.getCurrentSideSensor(0, 0) < 1) {
+         isFirstReading = true;
+         window.communicator.controller.modelState.setOldSideSensor(0, 1, 0);
+     }
+     /*
+      * note that we want to essneitally save this old side sensor value automatically in the model class (same as in visual gui - these classes shouldn't be modifying the model)
+      */
+     window.communicator.controller.modelState.setOldSideSensor(0, 1, window.communicator.controller.modelState.getCurrentSideSensor(0, 1));
+}
 				
 				
 				
-				for (int i = 0; i < 4; i++) {
-					for (int j = 0; j < 2; j++) {
-						int tempInt = window.communicator.controller.modelState.getCurrentSideSensor(i, j);
-						String tempString = new String();
-						if (tempInt < 10) {
-							tempString = "00";
-						} else if (tempInt < 100) {
-							tempString = "0";
-						}
-						SensorOutputDataGUI.sideSensor[i][j].setText(tempString + tempInt);
-					}
-				}
-				for (int i = 0; i < 10; i++) {
-					for (int j = 0; j < 16; j++) {
-						SensorOutputDataGUI.padCellData[i][j]
-								.setText("" + window.communicator.controller.modelState.getCurrentXYZ(i, j));
-					}
-				}
+				
+//				for (int i = 0; i < 4; i++) {
+//					for (int j = 0; j < 2; j++) {
+//						int tempInt = window.communicator.controller.modelState.getCurrentSideSensor(i, j);
+//						String tempString = new String();
+//						if (tempInt < 10) {
+//							tempString = "00";
+//						} else if (tempInt < 100) {
+//							tempString = "0";
+//						}
+//						SensorOutputDataGUI.sideSensor[i][j].setText(tempString + tempInt);
+//					}
+//				}
+//				for (int i = 0; i < 10; i++) {
+//					for (int j = 0; j < 16; j++) {
+//						SensorOutputDataGUI.padCellData[i][j]
+//								.setText("" + window.communicator.controller.modelState.getCurrentXYZ(i, j));
+//					}
+//				}
 			}
 		}
 	}
@@ -148,21 +152,6 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 	/*
 	 * ************************************************************************************** METHODS 
 	 */
-	/**
-	 * Maps x linearly to new scale 
-	 * 
-	 * @param x
-	 * @param in_min
-	 * @param in_max
-	 * @param out_min
-	 * @param out_max
-	 * @return mapped value 
-	 */
-    protected float map(float x, float in_min, float in_max, float out_min, float out_max)
-    {
-        if (x > in_max) x = in_max;
-        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-    }
 	
 	/**
 	 * changes JLabels font and text depending on sensor state 

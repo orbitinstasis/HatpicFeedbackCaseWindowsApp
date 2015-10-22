@@ -1,8 +1,0 @@
-Sun Oct 18 23:00:56 BST 2015
-Sensor States:
-
-Side#1=false
-Side#2=false
-Side#3=true
-Side#4=true
-XYZ#=true

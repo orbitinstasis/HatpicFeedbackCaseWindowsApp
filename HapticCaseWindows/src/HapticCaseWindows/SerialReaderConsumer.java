@@ -50,7 +50,7 @@ public class SerialReaderConsumer implements SerialPortEventListener {
 	public SerialReaderConsumer(Communicator communicator, ControlPanelGui window, InputStream in) {
 		this.in = in;
 		this.communicator = communicator;
-		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+//		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 	}
 
 	/**

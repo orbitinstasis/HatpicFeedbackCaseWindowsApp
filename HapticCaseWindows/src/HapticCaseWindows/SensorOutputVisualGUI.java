@@ -40,7 +40,7 @@ import javax.swing.UIManager;
  * For the canvas blocks, the main canvas for the xyz has been sized so THE X,Y SIZE of each xyz block is 25x25
  */
 @SuppressWarnings("serial")
-public class SensorOutputVisualGUI extends javax.swing.JFrame {
+public class SensorOutputVisualGUI extends javax.swing.JFrame implements Runnable {
 
 	/*
 	 * ************************************************************** GLOBAL
@@ -52,6 +52,8 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
     ControlPanelGui window = null;
     SensorOutputVisualGUI visualgui = null;
     Graphics2D[] g2d =  new Graphics2D[5];
+	Thread visualGuiUpdater = new Thread(this);
+
 	/*
 	 * ************************************************************** CONSTANTS
 	 */
@@ -66,29 +68,18 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
     	this.window = window;
         initComponents();
 
-        
-        
         for (int i = 0; i < 5; i++) {
         	canvas[i].setBackground(Color.BLACK);
         	canvas[i].setForeground(Color.BLACK);
         	gc[i] = canvas[i].getGraphics();
         	g2d[i] = (Graphics2D)gc[i];
-        	
-
-
-//        	if (i < 4)
-//        		gc[i].setColor(new Color(211,84,0,(25 + 25*i)));
-//        	else 
-//        		gc[i].setColor(xyzColor);
         }
-        
-//        System.out.println("window.visualgui.panel[3].getHeight());
         
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		int y = 2;
 		this.setLocation(dim.width/y+this.getSize().width/y, dim.height/3+this.getSize().height/3);
         
-		addWindowListener(new WindowAdapter() {
+		this.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
 				setVisible(false);
@@ -98,6 +89,62 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
 		});
     }
        
+	/*
+	 * ********************************************************************************** RUNNER 
+	 */  
+	@Override
+	public void run() {
+		while (window.communicator.isConsuming) {
+			if (!window.communicator.isAsleep) {
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				/*
+				 * for each side strip sensor
+				 */
+                for (int i = 0; i < 4; i++) {
+                    int force = window.communicator.controller.modelState.getCurrentSideSensor(i, 0);
+                    if (force != window.communicator.controller.modelState.getOldSideSensor(i, 0)) { // if we're only dealing with changing cells
+//                    	System.out.println("force != getoldSensorForce");
+	                    if (force > 0) {
+	                        int position = (int) window.communicator.controller.map(window.communicator.controller.modelState.getCurrentSideSensor(i, 1), 0, 254, 0, window.visualgui.canvas[i].getHeight());
+	        				window.visualgui.g2d[i].setColor(Color.BLACK);
+	        				window.visualgui.g2d[i].fillRect(0, 0, window.visualgui.canvas[0].getWidth(), window.visualgui.canvas[0].getHeight());
+	                        window.visualgui.g2d[i].setColor(Color.WHITE);
+	                        window.visualgui.g2d[i].setComposite(AlphaComposite.getInstance(AlphaComposite.SRC,((window.communicator.controller.map(force, 0, 100, 0, 1))) ));
+	                        window.communicator.controller.modelState.setOldSideSensor(i, 0,  window.communicator.controller.modelState.getCurrentSideSensor(i, 0)); //save old force
+                        	int temp = (int)(window.communicator.controller.map(force, 0, 60, 10, 38));
+                        	window.visualgui.g2d[i].fillOval((window.visualgui.canvas[0].getWidth()/2 - temp/2), (position-19), temp, temp);
+                        }
+                    }
+                }
+				
+                /*
+                 * do XYZ here
+                 */
+                for (int i = 0; i < 10; i++) {
+                    for (int j = 0; j < 16; j++) {
+                    	int force = window.communicator.controller.modelState.getCurrentXYZ(i, j);
+                        if (force != window.communicator.controller.modelState.getOldXYZ(i, j)) {
+                        	int RECT_SIZE = 25;
+            				window.visualgui.g2d[4].setColor(Color.BLACK);
+            				window.visualgui.g2d[4].fillRect((RECT_SIZE*i),(j*RECT_SIZE),(RECT_SIZE),(RECT_SIZE));
+                            window.communicator.controller.modelState.setOldXYZ(i, j, window.communicator.controller.modelState.getCurrentXYZ(i, j));
+                        	if (force > 0) {
+                                window.visualgui.g2d[4].setColor(Color.WHITE);
+                                window.visualgui.g2d[4].setComposite(AlphaComposite.getInstance(AlphaComposite.SRC,((window.communicator.controller.map(force, 0, 100, 0, 1))) ));
+                        		window.visualgui.g2d[4].fillRect((i * RECT_SIZE), (j * RECT_SIZE), (RECT_SIZE), (RECT_SIZE));
+                        	}
+                        }
+                    }
+                }
+			}
+		}
+	}
+    
 	/*
 	 * ********************************************************************************** METHODs 
 	 */  
@@ -215,4 +262,5 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame {
         );
         pack();
     }
+
 }

@@ -23,11 +23,11 @@ package HapticCaseWindows;
  *
  *-->>> additionally have a peek when writing to the model, turn that current sensor off if you read END_MARKER
  *
- *anchor the jframes together
+ *FIX THREAD HANDLING - THEY'RE NOT WAITING AS INTENDED but they are correctly behaving as the while loops intended (the wait will remove unnecessary while loop condtion checks )
  *
- *each data/visualgui needs its own runner.
+ *make a listener in the model that alerts all programs that want to access sensor data, when the sensor data has changed. else don'e poll the sensor data (as it's not changing )
  *
- *FIX THREAD HANDLING - THEY'RE NOT WAITING AS INTENDED
+ *move code that saves last active value (in the viosual gui) of the sensor (so oldSideSensopr = current side sensor) in the model instead of the visual gui runner 
  */
 
 import java.awt.Color;

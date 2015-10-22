@@ -119,13 +119,29 @@ public class Controller {
 	 */
 	
 	/**
+	 * Maps x linearly to new scale 
+	 * 
+	 * @param x
+	 * @param in_min
+	 * @param in_max
+	 * @param out_min
+	 * @param out_max
+	 * @return mapped value 
+	 */
+    protected float map(float x, float in_min, float in_max, float out_min, float out_max)
+    {
+        if (x > in_max) x = in_max;
+        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    }
+	
+	/**
 	 * Called by Consumer Thread
 	 * 
 	 * Writes all active sensor data to model 
 	 */
 	@SuppressWarnings("incomplete-switch")
 	private void consumerMethod() throws InterruptedException {
-		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+//		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		while (communicator.isConsuming) {
 			if (communicator.halt) {
 				synchronized (consumerThread) {
@@ -136,6 +152,9 @@ public class Controller {
 				}
 				synchronized (window.datagui.dataGuiUpdater) {
 					window.datagui.dataGuiUpdater.notify();
+				}
+				synchronized (window.visualgui.visualGuiUpdater) {
+					communicator.window.visualgui.visualGuiUpdater.notify();
 				}
 				communicator.halt = false;
 			}

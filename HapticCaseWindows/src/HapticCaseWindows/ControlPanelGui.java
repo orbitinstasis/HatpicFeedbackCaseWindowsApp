@@ -106,6 +106,9 @@ public class ControlPanelGui extends javax.swing.JFrame implements Runnable {
 		synchronized (communicator.window.datagui.dataGuiUpdater) {
 			communicator.window.datagui.dataGuiUpdater.notify();
 		}
+		synchronized (communicator.window.visualgui.visualGuiUpdater) {
+			communicator.window.visualgui.visualGuiUpdater.notify();
+		}
 	}
 	
 	/**
@@ -145,19 +148,14 @@ public class ControlPanelGui extends javax.swing.JFrame implements Runnable {
 	public void run() {
 		// Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		while (communicator.isConsuming) {
-			
-			
-			
-			
-			
-			// System.out.println("i'm cons in gui");
 			if (communicator.halt) {// NOT DEBUG
-				System.out.println("Halt");
 				try {
 					synchronized (guiUpdater) {
 						guiUpdater.wait();
 					}
-					System.out.println("released guiUpdater");
+					synchronized (communicator.window.visualgui.visualGuiUpdater) {
+						communicator.window.visualgui.visualGuiUpdater.wait();
+					}
 					synchronized (communicator.window.datagui.dataGuiUpdater) {
 						communicator.window.datagui.dataGuiUpdater.wait();
 					}
@@ -256,9 +254,10 @@ public class ControlPanelGui extends javax.swing.JFrame implements Runnable {
 		// sensorSelector.isVisible() + "\ndatagui visibile: "
 		// + datagui.isVisible() + "\nVisual gui visible: " +
 		// visualgui.isVisible());
-		communicator.controller.modelState.writeSensorStateToFile();
-		communicator.controller.modelState.writeSensorDataToFile();
-
+//		communicator.controller.modelState.writeSensorStateToFile();
+//		communicator.controller.modelState.writeSensorDataToFile();
+		datagui.datagui.robot.mouseMove(0, 0);
+		
 	}
 
 	/**
@@ -309,6 +308,9 @@ public class ControlPanelGui extends javax.swing.JFrame implements Runnable {
 					}
 					synchronized (communicator.window.datagui.dataGuiUpdater) {
 						communicator.window.datagui.dataGuiUpdater.start();
+					}
+					synchronized (communicator.window.visualgui.visualGuiUpdater) {
+						communicator.window.visualgui.visualGuiUpdater.start();
 					}
 					communicator.initListener();
 				}
