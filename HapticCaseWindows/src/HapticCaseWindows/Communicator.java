@@ -51,12 +51,12 @@ public class Communicator
 	/*
 	 **************************************************************  GLOBALS
 	 */
-	public boolean isAsleep = true; // we want this in a file so other programs
+	protected boolean isAsleep = true; // we want this in a file so other programs
 	// can query it
-	Controller controller = null;
-	Object changingSensorLock = new Object();
-	protected BlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(512);
-	boolean isConsuming = false;
+	protected Controller controller = null;
+	protected Object changingSensorLock = new Object();
+	protected BlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(256);
+	protected boolean isConsuming = false;
 	// for containing the ports that will be found
 	private Enumeration<?> ports = null;
 	// map the port names to CommPortIdentifiers
@@ -72,11 +72,11 @@ public class Communicator
 	// is connected to a serial port or not
 	private boolean bConnected = false;
 	// passed from main GUI
-	ControlPanelGui window = null;
+	protected ControlPanelGui window = null;
 	// SensorSelectorGUI sensorSelector = null;
 	// a string for recording what goes on in the program
 	// this string is written to the GUI
-	String logText = "";
+	protected String logText = "";
 	protected boolean halt = true;
 
 	/*
@@ -84,8 +84,8 @@ public class Communicator
 	 */
 	// the timeout value for connecting with the port
 	private final static int TIMEOUT = 2000;
-	final static int SLEEP_BAUD_RATE = 9600;
-	final static int AWAKE_BAUD_RATE = 115200;
+	protected final static int SLEEP_BAUD_RATE = 9600;
+	protected final static int AWAKE_BAUD_RATE = 115200;
 
 	private final static int INIT_SLEEP_SETTING = 0;
 
@@ -107,7 +107,7 @@ public class Communicator
 	 * Adds integer 'data' to the array blocking queue 'queue'
 	 * @param data
 	 */
-	public void addToQueue(int data) {
+	protected void addToQueue(int data) {
 		queue.add(data);
 	}
 	
@@ -119,7 +119,7 @@ public class Communicator
 	 * Searches and adds all the found ports to a combo box on the GUI
 	 */
 	@SuppressWarnings("unchecked")
-	public void searchForPorts() {
+	protected void searchForPorts() {
 		ports = CommPortIdentifier.getPortIdentifiers();
 		while (ports.hasMoreElements()) {
 			CommPortIdentifier curPort = (CommPortIdentifier) ports.nextElement();
@@ -140,7 +140,7 @@ public class Communicator
 	 * pre: ports are already found by using the searchForPorts method
 	 * post: the connected comm port is stored in commPort, otherwise an exception is generated
 	 */
-	public void connect() {
+	protected void connect() {
 		String selectedPort = (String) window.cboxPorts.getSelectedItem();
 		selectedPortIdentifier = (CommPortIdentifier) portMap.get(selectedPort);
 		CommPort commPort = null;
@@ -176,7 +176,7 @@ public class Communicator
 	 * 
 	 * @return successful
 	 */
-	public boolean initIOStream() {
+	protected boolean initIOStream() {
 		boolean successful = false;
 		try {
 			input = serialPort.getInputStream();
@@ -196,7 +196,7 @@ public class Communicator
 	 * pre: an open serial port
 	 * post: an event listener for the serial port that knows when data is received
 	 */
-	public void initListener() {
+	protected void initListener() {
 		try {
 			serialPort.addEventListener(new SerialReaderConsumer(this, window, input));
 			serialPort.notifyOnDataAvailable(true);
@@ -243,7 +243,7 @@ public class Communicator
 	 * pre: an open serial port
 	 * post: closed serial port
 	 */
-	public void disconnect() {
+	protected void disconnect() {
 		synchronized (changingSensorLock) {
 			halt = true;
 			isAsleep = true;
@@ -299,7 +299,7 @@ public class Communicator
 	 * know if  the com port is connected to this app 
 	 * @return connected 
 	 */
-	final public boolean getConnected() {
+	final protected boolean getConnected() {
 		return bConnected;
 	}
 
@@ -307,7 +307,7 @@ public class Communicator
 	 * sets connected flag 
 	 * @param bConnected
 	 */
-	public void setConnected(boolean bConnected) {
+	protected void setConnected(boolean bConnected) {
 		this.bConnected = bConnected;
 	}
 	
@@ -318,7 +318,7 @@ public class Communicator
 	 * and only set low before system.exit is called
 	 * @param in
 	 */
-	public void setReadingFlag(boolean in) {
+	protected void setReadingFlag(boolean in) {
 		isConsuming = in;
 	}
 

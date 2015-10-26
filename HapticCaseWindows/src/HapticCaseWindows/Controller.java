@@ -42,16 +42,16 @@ public class Controller {
 	/*
 	 * ************************************************************* GLOBALS
 	 */
-	protected Communicator communicator = null;
-	protected ControlPanelGui window = null;
+	private Communicator communicator = null;
+	private ControlPanelGui window = null;
 	private int xCount = 0;
 	private int yCount = 0;
 	private boolean gotZero = false;
-	protected SensorState currentSensor = SensorState.READY;
+	private SensorState currentSensor = SensorState.READY;
 	protected volatile int sensors = 0;
 	protected Model modelState = new Model();
 	protected List<SensorState> activeSensors = new ArrayList<SensorState>(5);
-	protected static enum SensorState {
+	private static enum SensorState {
 		IN_STRIP_1, IN_STRIP_2, IN_STRIP_3, IN_STRIP_4, IN_XYZ, READY;
 	}
 
@@ -82,7 +82,7 @@ public class Controller {
 	 * @param input state
 	 * @return activeSensor contains input state
 	 */
-	public boolean inSensorQuery(SensorState in) {
+	protected boolean inSensorQuery(SensorState in) {
 		return activeSensors.contains(in);
 	}
 
@@ -96,7 +96,7 @@ public class Controller {
 	 * Calls consumerMethod 
 	 * Complements the producer in the serialReader instantiated from within the communicator 
 	 */
-	Thread consumerThread = new Thread(new Runnable() {
+	protected Thread consumerThread = new Thread(new Runnable() {
 		public void run() {
 			try {
 				Thread.sleep(50);
@@ -283,7 +283,7 @@ public class Controller {
 	 * if all sensors are eventually off, then sleep baud rate is entered on both hardware and receiver 
 	 * 
 	 */
-	public void changeSensorsOutsideSleepBySwitch(int desiredSensor) {
+	protected void changeSensorsOutsideSleepBySwitch(int desiredSensor) {
 		synchronized (communicator.changingSensorLock) {
 			activeSensors.clear();// clear active sensor list
 			currentSensor = SensorState.READY;

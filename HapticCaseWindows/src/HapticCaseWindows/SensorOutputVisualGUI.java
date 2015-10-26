@@ -45,21 +45,21 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame implements Runnabl
 	/*
 	 * ************************************************************** GLOBAL
 	 */   
-	protected JPanel[] panel = new JPanel[5];
-	protected Canvas[] canvas = new Canvas[5];
-    private GroupLayout[] grouplayout = new GroupLayout[5];
-    protected Graphics gc[] = new Graphics[5]; // this gc is used for each canvas
-    ControlPanelGui window = null;
-    SensorOutputVisualGUI visualgui = null;
-    Graphics2D[] g2d =  new Graphics2D[5];
-	Thread visualGuiUpdater = new Thread(this);
+	private  JPanel[] panel = new JPanel[5];
+	private  Canvas[] canvas = new Canvas[5];
+	private  GroupLayout[] grouplayout = new GroupLayout[5];
+	private  Graphics gc[] = new Graphics[5]; // this gc is used for each canvas
+    private ControlPanelGui window = null;
+    protected SensorOutputVisualGUI visualgui = null;
+    protected Graphics2D[] g2d =  new Graphics2D[5];
+    protected Thread visualGuiUpdater = new Thread(this);
 
 	/*
 	 * ************************************************************** CONSTANTS
 	 */
-    protected static Color stripColor = Color.decode("#d35400");
-    protected static Color xyzColor = Color.decode("#c0392b");
-    
+//    private static Color stripColor = Color.decode("#d35400");
+//    private static Color xyzColor = Color.decode("#c0392b");
+//    
     /**
      * ************************************************************* CONSRTUCTOR
      * @param window 
@@ -96,12 +96,12 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame implements Runnabl
 	public void run() {
 		while (window.communicator.isConsuming) {
 			if (!window.communicator.isAsleep) {
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+//				try {
+//					Thread.sleep(500);
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
 				/*
 				 * for each side strip sensor
 				 */
@@ -169,7 +169,7 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame implements Runnabl
      * 
      * @param visualgui
      */
-    public void visualGUImain(SensorOutputVisualGUI visualgui) {
+    protected void visualGUImain(SensorOutputVisualGUI visualgui) {
     	this.visualgui = visualgui;
 		try {
 			// UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");

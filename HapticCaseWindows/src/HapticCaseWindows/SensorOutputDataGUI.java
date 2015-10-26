@@ -35,26 +35,26 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 	/*
 	 * ******************************************************************************GLOBALS
 	 */
-	boolean isFirstReading = true;
+//	private boolean isFirstReading = true;
 	/*
 	 * we may want to move this robot to the controller 
 	 */
-	Robot robot = null;
+	protected Robot robot = null;
 	// JLabels
-	static protected JLabel[][] sideSensor;
-	protected JLabel[] forceLabel;
-	static protected JLabel[][] padCellData;
-	protected JLabel[] positionLabel;
-	protected JLabel[] sensorLabel;
-	protected JLabel rearPadLabel;
+	static private JLabel[][] sideSensor;
+	private JLabel[] forceLabel;
+	static private JLabel[][] padCellData;
+	private JLabel[] positionLabel;
+	private JLabel[] sensorLabel;
+	private JLabel rearPadLabel;
 	// JPanels
 	private javax.swing.JPanel jPanel2;
 	private javax.swing.JPanel rearXYZDataPanel;
 	private javax.swing.JPanel sensorDataMainPanel;
 	// Passed in from gui
-	ControlPanelGui window = null;
-	SensorOutputDataGUI datagui = null;
-	Thread dataGuiUpdater = new Thread(this);
+	private ControlPanelGui window = null;
+	protected SensorOutputDataGUI datagui = null;
+	protected Thread dataGuiUpdater = new Thread(this);
 
 	/**
 	 ********************************************************************************* CONSTRUCTOR
@@ -92,59 +92,59 @@ public class SensorOutputDataGUI extends javax.swing.JFrame implements Runnable 
 		while (window.communicator.isConsuming) {
 			if (!window.communicator.isAsleep) {
 				
-	/*
-	 * we want to add a tolerance for the position value so it doesn't pick up noise			
-	 */
-if (window.communicator.controller.modelState.getOldSideSensor(0, 0) != window.communicator.controller.modelState.getCurrentSideSensor(0, 0)) {
-
-	int speed = 0;
-	 if (isFirstReading) { //avoid bogus reading from an invalid position reading
-         isFirstReading = false;
-     } else {
-         if (Math.abs(window.communicator.controller.modelState.getOldSideSensor(0, 1) - window.communicator.controller.modelState.getCurrentSideSensor(0, 1)) > 0) {
-             speed = ((int) window.communicator.controller.map(window.communicator.controller.modelState.getCurrentSideSensor(0, 0), 0, 250, 0, 80)) * Math.abs(window.communicator.controller.modelState.getCurrentSideSensor(0, 1) - window.communicator.controller.modelState.getOldSideSensor(0, 1)); // multiplier is force multiplied by difference of strp position
-             if (window.communicator.controller.modelState.getCurrentSideSensor(0, 1) >= window.communicator.controller.modelState.getOldSideSensor(0, 1))  //moving down
-                 speed *= -1;
-             /*
-              * next two lines should be removed, we want to adjust value of scroll depending on the linear mapping a few lines up where we set Speed
-              */
-             int signum = Integer.signum(speed);
-             speed = signum *  (int) (window.communicator.controller.map(Math.abs(speed), 0, 30, 0, 5));
-             System.out.println("\nSpeed: " + speed);
-             robot.mouseWheel(speed); // do the scroll
-         }
-     }
-     if (window.communicator.controller.modelState.getCurrentSideSensor(0, 0) < 1) {
-         isFirstReading = true;
-         window.communicator.controller.modelState.setOldSideSensor(0, 1, 0);
-     }
-     /*
-      * note that we want to essneitally save this old side sensor value automatically in the model class (same as in visual gui - these classes shouldn't be modifying the model)
-      */
-     window.communicator.controller.modelState.setOldSideSensor(0, 1, window.communicator.controller.modelState.getCurrentSideSensor(0, 1));
-}
-				
-				
-				
-				
-//				for (int i = 0; i < 4; i++) {
-//					for (int j = 0; j < 2; j++) {
-//						int tempInt = window.communicator.controller.modelState.getCurrentSideSensor(i, j);
-//						String tempString = new String();
-//						if (tempInt < 10) {
-//							tempString = "00";
-//						} else if (tempInt < 100) {
-//							tempString = "0";
-//						}
-//						SensorOutputDataGUI.sideSensor[i][j].setText(tempString + tempInt);
-//					}
+				/*
+				 * we want to add a tolerance for the position value so it doesn't pick up noise			
+				 */
+//				if (window.communicator.controller.modelState.getOldSideSensor(0, 0) != window.communicator.controller.modelState.getCurrentSideSensor(0, 0)) {
+//				
+//					int speed = 0;
+//					 if (isFirstReading) { //avoid bogus reading from an invalid position reading
+//				         isFirstReading = false;
+//				     } else {
+//				         if (Math.abs(window.communicator.controller.modelState.getOldSideSensor(0, 1) - window.communicator.controller.modelState.getCurrentSideSensor(0, 1)) > 0) {
+//				             speed = ((int) window.communicator.controller.map(window.communicator.controller.modelState.getCurrentSideSensor(0, 0), 0, 250, 0, 80)) * Math.abs(window.communicator.controller.modelState.getCurrentSideSensor(0, 1) - window.communicator.controller.modelState.getOldSideSensor(0, 1)); // multiplier is force multiplied by difference of strp position
+//				             if (window.communicator.controller.modelState.getCurrentSideSensor(0, 1) >= window.communicator.controller.modelState.getOldSideSensor(0, 1))  //moving down
+//				                 speed *= -1;
+//				             /*
+//				              * next two lines should be removed, we want to adjust value of scroll depending on the linear mapping a few lines up where we set Speed
+//				              */
+//				             int signum = Integer.signum(speed);
+//				             speed = signum *  (int) (window.communicator.controller.map(Math.abs(speed), 0, 30, 0, 5));
+//				             System.out.println("\nSpeed: " + speed);
+//				             robot.mouseWheel(speed); // do the scroll
+//				         }
+//				     }
+//				     if (window.communicator.controller.modelState.getCurrentSideSensor(0, 0) < 1) {
+//				         isFirstReading = true;
+//				         window.communicator.controller.modelState.setOldSideSensor(0, 1, 0);
+//				     }
+//				     /*
+//				      * note that we want to essneitally save this old side sensor value automatically in the model class (same as in visual gui - these classes shouldn't be modifying the model)
+//				      */
+//				     window.communicator.controller.modelState.setOldSideSensor(0, 1, window.communicator.controller.modelState.getCurrentSideSensor(0, 1));
 //				}
-//				for (int i = 0; i < 10; i++) {
-//					for (int j = 0; j < 16; j++) {
-//						SensorOutputDataGUI.padCellData[i][j]
-//								.setText("" + window.communicator.controller.modelState.getCurrentXYZ(i, j));
-//					}
-//				}
+				
+				
+				
+				
+				for (int i = 0; i < 4; i++) {
+					for (int j = 0; j < 2; j++) {
+						int tempInt = window.communicator.controller.modelState.getCurrentSideSensor(i, j);
+						String tempString = new String();
+						if (tempInt < 10) {
+							tempString = "00";
+						} else if (tempInt < 100) {
+							tempString = "0";
+						}
+						SensorOutputDataGUI.sideSensor[i][j].setText(tempString + tempInt);
+					}
+				}
+				for (int i = 0; i < 10; i++) {
+					for (int j = 0; j < 16; j++) {
+						SensorOutputDataGUI.padCellData[i][j]
+								.setText("" + window.communicator.controller.modelState.getCurrentXYZ(i, j));
+					}
+				}
 			}
 		}
 	}
@@ -213,7 +213,7 @@ if (window.communicator.controller.modelState.getOldSideSensor(0, 0) != window.c
 	 * 
 	 * @param datagui
 	 */
-	public void numericGUImain(SensorOutputDataGUI datagui) {
+	protected void numericGUImain(SensorOutputDataGUI datagui) {
 		this.datagui = datagui;
 		try {
 			// UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");

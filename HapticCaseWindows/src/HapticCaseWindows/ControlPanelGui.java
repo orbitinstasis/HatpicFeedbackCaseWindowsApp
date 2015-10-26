@@ -32,29 +32,29 @@ public class ControlPanelGui extends javax.swing.JFrame implements Runnable {
 	/*
 	 * ************************************************************ GLOBALS
 	 */
-	public javax.swing.JButton btnConnect;
-	public javax.swing.JButton btnDisconnect;
-	public javax.swing.JButton btnShowSensorSelectorPane;
-	public javax.swing.JButton btnDebug;
-	public javax.swing.JButton btnShowVisualGui;
-	public javax.swing.JButton btnShowDataGui;
+	protected javax.swing.JButton btnConnect;
+	protected javax.swing.JButton btnDisconnect;
+	protected javax.swing.JButton btnShowSensorSelectorPane;
+	protected javax.swing.JButton btnDebug;
+	protected javax.swing.JButton btnShowVisualGui;
+	protected javax.swing.JButton btnShowDataGui;
 	@SuppressWarnings("rawtypes")
-	public javax.swing.JComboBox cboxPorts;
+	protected javax.swing.JComboBox cboxPorts;
 	private javax.swing.JLabel controlPanelLabel;
 	private javax.swing.JLabel logNameLabel;
-	public javax.swing.JLabel sensorNumberLabel;
+	protected javax.swing.JLabel sensorNumberLabel;
 	private javax.swing.JLabel comPortSelectLabel;
 	private javax.swing.JScrollPane jScrollPane1;
 	private javax.swing.JScrollPane jScrollPane2;
 	private javax.swing.JTextArea jTextArea1;
-	public javax.swing.JTextArea txtLog;
+	protected javax.swing.JTextArea txtLog;
 	// object for selecting my sensors
-	SensorSelectorGUI sensorSelector = null;
+	protected SensorSelectorGUI sensorSelector = null;
 	// Communicator object
-	Communicator communicator = null;
-	SensorOutputDataGUI datagui = null;
-	SensorOutputVisualGUI visualgui = null;
-	Thread guiUpdater = new Thread(this);
+	protected Communicator communicator = null;
+	protected SensorOutputDataGUI datagui = null;
+	protected SensorOutputVisualGUI visualgui = null;
+	protected Thread guiUpdater = new Thread(this);
 
 	/**
 	 *************************************************************** CONSTRUCTOR 
@@ -125,7 +125,7 @@ public class ControlPanelGui extends javax.swing.JFrame implements Runnable {
 	 * toggles the connect/disconnect/COM combo box and other communication
 	 * controllers appropriately depending on the state of the communicator
 	 */
-	public void toggleAllControls() {
+	protected void toggleAllControls() {
 		// sensorSelector.toggleSensorButtons();
 		if (communicator.getConnected() == true) {
 			btnDisconnect.setEnabled(true);

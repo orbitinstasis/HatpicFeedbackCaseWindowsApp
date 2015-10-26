@@ -36,7 +36,7 @@ public class SerialReaderConsumer implements SerialPortEventListener {
 	 * ******************************************************** GLOBALS
 	 */
 	private InputStream in;
-	Communicator communicator = null;
+	private Communicator communicator = null;
 
 	/**
 	 * **************************************************************

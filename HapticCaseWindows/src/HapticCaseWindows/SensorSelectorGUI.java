@@ -40,13 +40,13 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 	/*
 	 ************************************************************* GLOBALS
 	 */
-	protected static long lastHit;
+	private  static long lastHit;
 	private JButton[] sensor = new JButton[5];
 	private FlowLayout experimentLayout = new FlowLayout();
 	private SensorSelectorGUI sensorSelector;
 	// passed from main GUI
-	protected ControlPanelGui window = null;
-	protected Communicator communicator = null;
+	private  ControlPanelGui window = null;
+	private  Communicator communicator = null;
 
 	/*
 	 ************************************************************* CONSTANTS
@@ -81,7 +81,7 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 	/**
 	 * Toggles enabled state of all sensor buttons
 	 */
-	public void toggleSensorButtons(boolean tog) {
+	protected void toggleSensorButtons(boolean tog) {
 		for (int i = 0; i < 5; i++) {
 			sensor[i].setEnabled(tog);
 		}
@@ -90,7 +90,7 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 	/**
 	 * Re-initialises all button states depending on hardware state
 	 */
-	public void resetButtonState() {
+	protected void resetButtonState() {
 		Font offFont = null;
 		for (int i = 0; i < 5; i++) {
 			if (i > 3) {
@@ -112,7 +112,7 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 	 * 
 	 * Font and text is changed
 	 */
-	public void changeButText(int id) {
+	private void changeButText(int id) {
 		String temp;
 		Font onFont = null;
 		window.visualgui.cleanCanvas(id);
@@ -207,7 +207,7 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 	 * Create the GUI and show it. For thread safety, this method should be
 	 * invoked from the event dispatch thread.
 	 */
-	public void createAndShowGUI() {
+	private void createAndShowGUI() {
 		sensorSelector.addComponentsToPane(sensorSelector.getContentPane());
 		toggleSensorButtons(false);
 		sensorSelector.pack();
@@ -223,7 +223,7 @@ public class SensorSelectorGUI extends javax.swing.JFrame {
 	 * 
 	 * Initialises this class and invokes the JFrame
 	 */
-	public void mainSensorSelectorGui(SensorSelectorGUI sensorSelector) {
+	protected void mainSensorSelectorGui(SensorSelectorGUI sensorSelector) {
 		this.sensorSelector = sensorSelector;
 		try {
 			// UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");

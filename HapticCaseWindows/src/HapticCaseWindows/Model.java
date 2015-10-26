@@ -55,7 +55,7 @@ public class Model {
 	/**
 	 ************************************************************* CONSTRUCTOR
 	 */
-	public Model() {
+	protected Model() {
 		for (int i = 0; i < ROWS; i++) {
 			for (int j = 0; j < COLS; j++) {
 				setCurrentXYZ(i, j, 0);
@@ -75,7 +75,7 @@ public class Model {
 	 * @param col
 	 * @return requested pad values current state
 	 */
-	public int getCurrentXYZ(int row, int col) {
+	protected int getCurrentXYZ(int row, int col) {
 //		synchronized (currentXYZLock) {
 			return padCell[row][col];
 //		}
@@ -88,7 +88,7 @@ public class Model {
 	 * @param col
 	 * @return requested pad values current state
 	 */
-	public int getOldXYZ(int row, int col) {
+	protected int getOldXYZ(int row, int col) {
 //		synchronized (oldXYZLock) {
 			return oldPadCell[row][col];
 //		}
@@ -101,7 +101,7 @@ public class Model {
 	 * @param parameter
 	 * @return requested side sensor current state
 	 */
-	public int getCurrentSideSensor(int sensor, int parameter) {
+	protected int getCurrentSideSensor(int sensor, int parameter) {
 //		synchronized (currentSideLock) {
 			return currentSideSensor[sensor][parameter];
 //		}
@@ -113,7 +113,7 @@ public class Model {
 	 * @param sensor
 	 * @return requested side sensor old force value
 	 */
-	public int getOldSideSensor(int sensor, int parameter) {
+	protected int getOldSideSensor(int sensor, int parameter) {
 //		synchronized (oldSideLock) {
 			return oldSideSensor[sensor][parameter];
 //		}
@@ -125,7 +125,7 @@ public class Model {
 	 * @param sensor
 	 * @return requested side sensor old force value
 	 */
-	public void setOldSideSensor(int sensor, int parameter, int value) {
+	protected void setOldSideSensor(int sensor, int parameter, int value) {
 		synchronized (oldSideLock) {
 			if (value != oldSideSensor[sensor][parameter])
 				oldSideSensor[sensor][parameter] = value;
@@ -139,7 +139,7 @@ public class Model {
 	 * @param sensorAttribute
 	 * @param value
 	 */
-	public void setCurrentSideSensor(int stripNumber, int sensorAttribute, Integer value) {
+	protected void setCurrentSideSensor(int stripNumber, int sensorAttribute, Integer value) {
 		synchronized (currentSideLock) {
 			if (value != currentSideSensor[stripNumber][sensorAttribute])
 				currentSideSensor[stripNumber][sensorAttribute] = value;
@@ -153,7 +153,7 @@ public class Model {
 	 * @param col
 	 * @param value
 	 */
-	public void setOldXYZ(int row, int col, int value) {
+	protected void setOldXYZ(int row, int col, int value) {
 		synchronized (oldXYZLock) {
 			if (value != oldPadCell[row][col])
 				oldPadCell[row][col] = value;
@@ -167,10 +167,11 @@ public class Model {
 	 * @param col
 	 * @param value
 	 */
-	public void setCurrentXYZ(int row, int col, int value) {
-		synchronized (currentXYZLock) {
-			if (value != padCell[row][col])
+	protected void setCurrentXYZ(int row, int col, int value) {
+		if (value != padCell[row][col]) {
+			synchronized (currentXYZLock) {
 				padCell[row][col] = value;
+			}
 		}
 	}
 
@@ -230,7 +231,7 @@ public class Model {
 	/**
 	 * Reinitialises entire model
 	 */
-	public void cleanSensors() {
+	protected void cleanSensors() {
 		for (int i = 0; i < ROWS; i++) {
 			for (int j = 0; j < COLS; j++) {
 				setCurrentXYZ(i, j, 0);
