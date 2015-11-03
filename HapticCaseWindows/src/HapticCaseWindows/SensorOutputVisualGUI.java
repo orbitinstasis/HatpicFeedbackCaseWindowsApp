@@ -92,55 +92,109 @@ public class SensorOutputVisualGUI extends javax.swing.JFrame implements Runnabl
 	/*
 	 * ********************************************************************************** RUNNER 
 	 */  
+    boolean isFirstReading = false; //DELETE THIS - IT GOES WITH THE THUMB SCROLLER
+    int count = 0;  // DEBUG 
 	@Override
 	public void run() {
 		while (window.communicator.isConsuming) {
 			if (!window.communicator.isAsleep) {
-//				try {
-//					Thread.sleep(500);
-//				} catch (InterruptedException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
+	
 				/*
-				 * for each side strip sensor
+				 * Next chunk of code is the thumb scroller
+				 * 
+				 * we want to add a tolerance for the position value so it doesn't pick up noise			
 				 */
-                for (int i = 0; i < 4; i++) {
-                    int force = window.communicator.controller.modelState.getCurrentSideSensor(i, 0);
-                    if (force != window.communicator.controller.modelState.getOldSideSensor(i, 0)) { // if we're only dealing with changing cells
-//                    	System.out.println("force != getoldSensorForce");
-	                    if (force > 0) {
-	                        int position = (int) window.communicator.controller.map(window.communicator.controller.modelState.getCurrentSideSensor(i, 1), 0, 254, 0, window.visualgui.canvas[i].getHeight());
-	        				window.visualgui.g2d[i].setColor(Color.BLACK);
-	        				window.visualgui.g2d[i].fillRect(0, 0, window.visualgui.canvas[0].getWidth(), window.visualgui.canvas[0].getHeight());
-	                        window.visualgui.g2d[i].setColor(Color.WHITE);
-	                        window.visualgui.g2d[i].setComposite(AlphaComposite.getInstance(AlphaComposite.SRC,((window.communicator.controller.map(force, 0, 100, 0, 1))) ));
-	                        window.communicator.controller.modelState.setOldSideSensor(i, 0,  window.communicator.controller.modelState.getCurrentSideSensor(i, 0)); //save old force
-                        	int temp = (int)(window.communicator.controller.map(force, 0, 60, 10, 38));
-                        	window.visualgui.g2d[i].fillOval((window.visualgui.canvas[0].getWidth()/2 - temp/2), (position-19), temp, temp);
-                        }
-                    }
-                }
+				final int tempSensor = 3;
+				int startCurrentForce = window.communicator.controller.modelState.getCurrentSideSensor(tempSensor, 0);
+				int startOldForce = window.communicator.controller.modelState.getOldSideSensor(tempSensor, 0);
+				if (startOldForce != startCurrentForce) {
+					final int ERR = 4;
+					int speed = 0;
+					int startOldPosition = window.communicator.controller.modelState.getOldSideSensor(tempSensor, 1);
+					int startCurrentPosition = window.communicator.controller.modelState.getCurrentSideSensor(tempSensor, 1);
+					 if (isFirstReading) { //avoid bogus reading from an invalid position reading
+				         isFirstReading = false;
+				     } else {
+				         if (startCurrentForce > 25 && (Math.abs(startOldPosition - startCurrentPosition) >= ERR)) { 
+				             speed = ((int) window.communicator.controller.map(startCurrentForce, 0, 120, 0, 100)) * Math.abs(startCurrentPosition - startOldPosition); // multiplier is force multiplied by difference of strp position
+				             if (startCurrentPosition >= startOldPosition)  //moving down
+				                 speed *= -1;
+				             speed = (Integer.signum(speed) *  (int) window.communicator.controller.map(Math.abs(speed), 0, 1500, 0, 5));
+				             if (speed != 0) {
+					             if (speed > 4) //accelerate when applied (excessive) force 
+					            	 speed += 4;
+				            	 int sleep = 3*Math.abs(speed);
+				            	 try {Thread.sleep(sleep);} catch (InterruptedException e) {e.printStackTrace();}
+				            	 System.out.println("\n\nSpeed: " + speed + ",    Count: " + count++ + ",     Sleep: " + sleep); 
+					             window.communicator.controller.robot.mouseWheel(speed); // do the scroll
+				             }
+				         }
+				     }
+				     if (startCurrentForce < 1) {
+				         isFirstReading = true;
+				         window.communicator.controller.modelState.setOldSideSensor(tempSensor, 1, 0);
+				     }
+				     /*
+				      * note that we want to essneitally save this old side sensor value automatically in the model class (same as in visual gui - these classes shouldn't be modifying the model)
+				      */
+				     window.communicator.controller.modelState.setOldSideSensor(tempSensor, 1, startCurrentPosition);
+				}
 				
-                /*
-                 * do XYZ here
-                 */
-                for (int i = 0; i < 10; i++) {
-                    for (int j = 0; j < 16; j++) {
-                    	int force = window.communicator.controller.modelState.getCurrentXYZ(i, j);
-                        if (force != window.communicator.controller.modelState.getOldXYZ(i, j)) {
-                        	int RECT_SIZE = 25;
-            				window.visualgui.g2d[4].setColor(Color.BLACK);
-            				window.visualgui.g2d[4].fillRect((RECT_SIZE*i),(j*RECT_SIZE),(RECT_SIZE),(RECT_SIZE));
-                            window.communicator.controller.modelState.setOldXYZ(i, j, window.communicator.controller.modelState.getCurrentXYZ(i, j));
-                        	if (force > 0) {
-                                window.visualgui.g2d[4].setColor(Color.WHITE);
-                                window.visualgui.g2d[4].setComposite(AlphaComposite.getInstance(AlphaComposite.SRC,((window.communicator.controller.map(force, 0, 100, 0, 1))) ));
-                        		window.visualgui.g2d[4].fillRect((i * RECT_SIZE), (j * RECT_SIZE), (RECT_SIZE), (RECT_SIZE));
-                        	}
-                        }
-                    }
-                }
+				
+				
+				
+				
+				
+				
+				
+				/*
+				 * Next chunk of code (two fors) is the intended runner code.
+				 */
+				
+//				/*
+//				 * for each side strip sensor
+//				 */
+//                for (int i = 0; i < 4; i++) {
+//                    int force = window.communicator.controller.modelState.getCurrentSideSensor(i, 0);
+//                    if (force != window.communicator.controller.modelState.getOldSideSensor(i, 0)) { // if we're only dealing with changing cells
+////                    	System.out.println("force != getoldSensorForce");
+//	                    if (force > 0) {
+//	                        int position = (int) window.communicator.controller.map(window.communicator.controller.modelState.getCurrentSideSensor(i, 1), 0, 254, 0, window.visualgui.canvas[i].getHeight());
+//	        				window.visualgui.g2d[i].setColor(Color.BLACK);
+//	        				window.visualgui.g2d[i].fillRect(0, 0, window.visualgui.canvas[0].getWidth(), window.visualgui.canvas[0].getHeight());
+//	                        window.visualgui.g2d[i].setColor(Color.WHITE);
+//	                        window.visualgui.g2d[i].setComposite(AlphaComposite.getInstance(AlphaComposite.SRC,((window.communicator.controller.map(force, 0, 100, 0, 1))) ));
+//	                        window.communicator.controller.modelState.setOldSideSensor(i, 0,  window.communicator.controller.modelState.getCurrentSideSensor(i, 0)); //save old force
+//                        	int temp = (int)(window.communicator.controller.map(force, 0, 60, 10, 38));
+//                        	window.visualgui.g2d[i].fillOval((window.visualgui.canvas[0].getWidth()/2 - temp/2), (position-19), temp, temp);
+//                        }
+//                    }
+//                }
+//				
+//                /*
+//                 * do XYZ here
+//                 */
+//                for (int i = 0; i < 10; i++) {
+//                    for (int j = 0; j < 16; j++) {
+//                    	int force = window.communicator.controller.modelState.getCurrentXYZ(i, j);
+//                        if (force != window.communicator.controller.modelState.getOldXYZ(i, j)) {
+//                        	int RECT_SIZE = 25;
+//            				window.visualgui.g2d[4].setColor(Color.BLACK);
+//            				window.visualgui.g2d[4].fillRect((RECT_SIZE*i),(j*RECT_SIZE),(RECT_SIZE),(RECT_SIZE));
+//                            window.communicator.controller.modelState.setOldXYZ(i, j, window.communicator.controller.modelState.getCurrentXYZ(i, j));
+//                        	if (force > 0) {
+//                                window.visualgui.g2d[4].setColor(Color.WHITE);
+//                                window.visualgui.g2d[4].setComposite(AlphaComposite.getInstance(AlphaComposite.SRC,((window.communicator.controller.map(force, 0, 100, 0, 1))) ));
+//                        		window.visualgui.g2d[4].fillRect((i * RECT_SIZE), (j * RECT_SIZE), (RECT_SIZE), (RECT_SIZE));
+//                        	}
+//                        }
+//                    }
+//                }
+                
+                
+                
+                
+                
 			}
 		}
 	}

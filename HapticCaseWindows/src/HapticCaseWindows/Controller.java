@@ -20,7 +20,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package HapticCaseWindows;
 
+import java.awt.AWTException;
 import java.awt.Color;
+import java.awt.Robot;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +44,7 @@ public class Controller {
 	/*
 	 * ************************************************************* GLOBALS
 	 */
+	protected Robot robot = null;
 	private Communicator communicator = null;
 	private ControlPanelGui window = null;
 	private int xCount = 0;
@@ -61,8 +64,15 @@ public class Controller {
 	 * @param communicator
 	 */
 	public Controller(ControlPanelGui window, Communicator communicator) {
+		try {
+			robot = new Robot();
+		} catch (AWTException e) {
+			System.out.println("couldn't make a new robot");
+			e.printStackTrace();
+		}
 		this.window = window;
 		this.communicator = communicator;
+		
 	}
 
 	/*

@@ -256,7 +256,7 @@ public class ControlPanelGui extends javax.swing.JFrame implements Runnable {
 		// visualgui.isVisible());
 //		communicator.controller.modelState.writeSensorStateToFile();
 //		communicator.controller.modelState.writeSensorDataToFile();
-		datagui.datagui.robot.mouseMove(0, 0);
+		communicator.controller.robot.mouseMove(0, 0);
 		
 	}
 

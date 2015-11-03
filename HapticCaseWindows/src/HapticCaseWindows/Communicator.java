@@ -55,7 +55,7 @@ public class Communicator
 	// can query it
 	protected Controller controller = null;
 	protected Object changingSensorLock = new Object();
-	protected BlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(256);
+	protected BlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(1024);
 	protected boolean isConsuming = false;
 	// for containing the ports that will be found
 	private Enumeration<?> ports = null;
